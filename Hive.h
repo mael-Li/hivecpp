@@ -1,6 +1,6 @@
 //
-// Version 0.01 Created by 李世佳 on 24-10-11.
-//READ:以后所有版本基于此版本进行开发，包含基类和一个派生类Queen，并且写有一个简单的运行函数
+// Version 0.02 Created by 李世佳 on 24-10-16.
+//READ:基本的运行函数
 //
 #pragma once
 #ifndef HIVE_H
@@ -12,7 +12,7 @@
 #include <memory>
 #include <iostream>
 #include <unordered_map>
-
+static int index=0;
 namespace piecetype {
     class Board;
     class Piece;

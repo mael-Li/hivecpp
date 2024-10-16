@@ -10,12 +10,17 @@ int main() {
         HexCoord C;
         board.printBoard();
         std::cout<<"Please input Piece:\n";
-        std::cin>>x,y;
+        std::cin>>x>>y;
         std::cout<<std::endl;
         C.q = x;
         C.r = y;
     // 添加棋子
-    board.addPiece(std::make_shared<QueenBee>(),C);
-    board.printBoard();
-        return 0;
+    while (pos) {
+        std::cout<<"if you want continue,please type 1\n";
+        std::cin>>pos;
+        if(!pos) break;
+        board.addPiece(std::make_shared<QueenBee>(),C);
+        board.printBoard();
+    }
+    return 0;
     }

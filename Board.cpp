@@ -45,8 +45,8 @@ std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {
 
 
 void Board::printBoard() const {
-    int index = 0;
     std::cout<<"Board["<<index<<"]"<<std::endl;
+    index++;
     for (int row =-size;row<=size;++row) {
         for (int col = 0;col<size;++col) {
             HexCoord coord(row, col);
@@ -62,5 +62,4 @@ void Board::printBoard() const {
             }
         std::cout << std::endl;
         }
-    index++;
 }

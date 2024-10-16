@@ -1,6 +1,6 @@
 //
-// Version 0.02 Created by 李世佳 on 24-10-16.
-//READ:基本的运行函数
+// Version 0.03 Created by 李世佳 on 24-10-16.
+//READ:蚂蚁类,以及Queen类和Ant类移动测试
 //
 #pragma once
 #ifndef HIVE_H
@@ -86,6 +86,7 @@ public:
 //-------------------------蚂蚁---------------------------
 class Ant:public Piece {
         Ant():Piece(PieceName::Ant){}
+        std::string getName() const override{return "A";}
         bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
         void move(Board &board, const HexCoord &newPosition) override;
     };

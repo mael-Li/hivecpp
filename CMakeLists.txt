@@ -9,4 +9,6 @@ add_executable(Git_Hive main.cpp
         Piece.cpp
         HexCoordHash.h
         HexCoord.h
+        Game.cpp
+        Game.h
 )

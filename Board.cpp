@@ -16,8 +16,7 @@ std::shared_ptr<Piece> Board::getPieceAt(HexCoord coord) const {
     return nullptr;
 }
 bool Board::isValidPosition(HexCoord coord) const {
-    // Implement check for valid hexagonal grid coordinates
-    return abs(coord.q)<size&&abs(coord.r)<size; // Placeholder implementation
+    return abs(coord.q)<size&&abs(coord.r)<size;
 }
 bool Board::isPositionOccupied(HexCoord coord) const {
     return grid.find(coord) != grid.end();
@@ -65,72 +64,3 @@ void Board::printBoard() const {
         }
     index++;
 }
-
-
-
-
-/*
-Board::Board(int size) : size(size) {
-    initializeGrid();
-}
-
-Board::~Board() {
-    // 如果需要手动管理内存，这里可以释放
-}
-void Board::addPiece(std::shared_ptr<piecetype::Piece> piece, HexCoord coord) {
-    int rowIndex = coord.q + size - 1;
-    int colIndex = coord.r;
-
-    if (rowIndex >= 0 && rowIndex < grid.size() && colIndex >= 0 && colIndex < grid[rowIndex].size()) {
-        grid[rowIndex][colIndex].setPiece(piece);
-    } else {
-        throw std::out_of_range("Invalid position");
-    }
-}
-std::shared_ptr<piecetype::Piece> Board::getPieceAt(HexCoord coord) const {
-    int rowIndex = coord.q + size - 1;
-    int colIndex = coord.r;
-
-    if (rowIndex >= 0 && rowIndex < grid.size() && colIndex >= 0 && colIndex < grid[rowIndex].size()) {
-        return grid[rowIndex][colIndex].getPiece();
-    }
-    return nullptr;
-}
-void Board::printBoard() const {
-    for (int row = 0; row < grid.size(); ++row) {
-        for (int col = 0; col < grid[row].size(); ++col) {
-            const auto& hex = grid[row][col];
-            if (hex.getPiece()) {
-                std::cout << hex.getPiece()->getName() << ' ';
-            } else {
-                std::cout << ". ";
-            }
-        }
-        std::cout << std::endl;
-    }
-}
-bool Board::isValidPosition(HexCoord coord) const {
-    int rowIndex = coord.q + size - 1;
-    int colIndex = coord.r;
-
-    return rowIndex >= 0 && rowIndex < grid.size() && colIndex >= 0 && colIndex < grid[rowIndex].size();
-}
-bool Board::isPositionOccupied(HexCoord coord) const {
-    return getPieceAt(coord) != nullptr;
-}
-
-// 实现棋盘类的成员函数
-void Board::initializeGrid() {
-    //分配大小
-    grid.resize(size * 2 - 1);
-//棋盘形状
-    for (int row = 0; row < grid.size(); ++row){
-        int rowSize = std::max(0, size - std::abs(row - size + 1));
-        grid[row].resize(rowSize);
-
-        for (int col = 0; col < rowSize; ++col) {
-            grid[row][col] = Hexagon();
-        }
-    }
-}
-*/

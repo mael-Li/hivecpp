@@ -12,10 +12,11 @@ class Player;
 class Game {
 public:
     void start();
+    Game();
 private:
     piecetype::Board board;
     std::vector<std::shared_ptr<Player>> players;
-    Game();
+
 };
 
 class Player {

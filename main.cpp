@@ -1,7 +1,11 @@
 #include "Hive.h"
-
+#include "Game.h"
 int main() {
         using namespace piecetype;
+        Game game;
+        game.start();
+
+    /*
         int x,y;
         int index =0;
         bool pos = true;
@@ -29,37 +33,37 @@ int main() {
         C.r = y;
         board.addPiece(ant,C);
         board.printBoard();
-    /*
-    // 添加棋子
-    while (pos) {
-        std::cout<<"Please input Piece:\n";
-        std::cin>>x>>y;
-        std::cout<<std::endl;
-        C.q = x;
-        C.r = y;
-        board.addPiece(queen,C);
-        board.printBoard();
-        std::cout<<"if you want continue,please type 1\n";
-        std::cin>>pos;
-        if(!pos) break;
-    }
-    */
-    // 运动棋子
-    while (pos) {
-        //输入新位置
-        std::cout<<"Please input NewPosition:";
-        std::cin>>x>>y;
-        newposition.q = x;
-        newposition.r = y;
-        //移动
-        ant->move(board,newposition);
-        board.printBoard();
-        //停止程序
-        std::cout<<"if you want continue,please type 1\n";
-        std::cin>>pos;
-        if(!pos) break;
-    }
-
+        // 运动棋子
+        while (pos) {
+            //输入新位置
+            std::cout<<"Please input NewPosition:";
+            std::cin>>x>>y;
+            newposition.q = x;
+            newposition.r = y;
+            //移动
+            ant->move(board,newposition);
+            board.printBoard();
+            //停止程序
+            std::cout<<"if you want continue,please type 1\n";
+            std::cin>>pos;
+            if(!pos) break;
+        }
+        */
 
     return 0;
     }
+/*
+// 添加棋子
+while (pos) {
+    std::cout<<"Please input Piece:\n";
+    std::cin>>x>>y;
+    std::cout<<std::endl;
+    C.q = x;
+    C.r = y;
+    board.addPiece(queen,C);
+    board.printBoard();
+    std::cout<<"if you want continue,please type 1\n";
+    std::cin>>pos;
+    if(!pos) break;
+}
+*/

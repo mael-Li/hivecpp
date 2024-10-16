@@ -1,7 +1,7 @@
 //
 // Version 0.03 Created by 李世佳 on 24-10-16.
-//READ:蚂蚁类,以及Queen类和Ant类移动测试,移动方法尚未完成
-//BUG:这个版本的bug主要是棋子的位置信息并没有更新，所以要在实例化以后将地址赋值给他
+//READ:完成game的基本搭建
+//BUG:暂时没有检测
 //
 #pragma once
 #ifndef HIVE_H

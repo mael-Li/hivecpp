@@ -61,14 +61,14 @@ build CMakeFiles/Git_Hive.dir/Board.cpp.obj: CXX_COMPILER__Git_Hive_unscanned_De
   OBJECT_DIR = CMakeFiles\Git_Hive.dir
   OBJECT_FILE_DIR = CMakeFiles\Git_Hive.dir
 
-build CMakeFiles/Git_Hive.dir/QueenBee.cpp.obj: CXX_COMPILER__Git_Hive_unscanned_Debug E$:/A_SOURCE_LEARN/cpp_Ler/GIT_Hive/QueenBee.cpp || cmake_object_order_depends_target_Git_Hive
-  DEP_FILE = CMakeFiles\Git_Hive.dir\QueenBee.cpp.obj.d
+build CMakeFiles/Git_Hive.dir/Piece.cpp.obj: CXX_COMPILER__Git_Hive_unscanned_Debug E$:/A_SOURCE_LEARN/cpp_Ler/GIT_Hive/Piece.cpp || cmake_object_order_depends_target_Git_Hive
+  DEP_FILE = CMakeFiles\Git_Hive.dir\Piece.cpp.obj.d
   FLAGS = -g -std=gnu++14 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\Git_Hive.dir
   OBJECT_FILE_DIR = CMakeFiles\Git_Hive.dir
 
-build CMakeFiles/Git_Hive.dir/Piece.cpp.obj: CXX_COMPILER__Git_Hive_unscanned_Debug E$:/A_SOURCE_LEARN/cpp_Ler/GIT_Hive/Piece.cpp || cmake_object_order_depends_target_Git_Hive
-  DEP_FILE = CMakeFiles\Git_Hive.dir\Piece.cpp.obj.d
+build CMakeFiles/Git_Hive.dir/Game.cpp.obj: CXX_COMPILER__Git_Hive_unscanned_Debug E$:/A_SOURCE_LEARN/cpp_Ler/GIT_Hive/Game.cpp || cmake_object_order_depends_target_Git_Hive
+  DEP_FILE = CMakeFiles\Git_Hive.dir\Game.cpp.obj.d
   FLAGS = -g -std=gnu++14 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\Git_Hive.dir
   OBJECT_FILE_DIR = CMakeFiles\Git_Hive.dir
@@ -81,7 +81,7 @@ build CMakeFiles/Git_Hive.dir/Piece.cpp.obj: CXX_COMPILER__Git_Hive_unscanned_De
 #############################################
 # Link the executable Git_Hive.exe
 
-build Git_Hive.exe: CXX_EXECUTABLE_LINKER__Git_Hive_Debug CMakeFiles/Git_Hive.dir/main.cpp.obj CMakeFiles/Git_Hive.dir/Board.cpp.obj CMakeFiles/Git_Hive.dir/QueenBee.cpp.obj CMakeFiles/Git_Hive.dir/Piece.cpp.obj
+build Git_Hive.exe: CXX_EXECUTABLE_LINKER__Git_Hive_Debug CMakeFiles/Git_Hive.dir/main.cpp.obj CMakeFiles/Git_Hive.dir/Board.cpp.obj CMakeFiles/Git_Hive.dir/Piece.cpp.obj CMakeFiles/Git_Hive.dir/Game.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\Git_Hive.dir

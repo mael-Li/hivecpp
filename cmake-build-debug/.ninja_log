@@ -1,6 +1,7 @@
 # ninja log v6
 32	1077	7507982641656768	CMakeFiles/Git_Hive.dir/QueenBee.cpp.obj	bcb0c6547ec35e1b
-8	1168	7507982641416702	CMakeFiles/Git_Hive.dir/main.cpp.obj	be53fa97f46f0e83
-44	1169	7507982641777750	CMakeFiles/Git_Hive.dir/Piece.cpp.obj	e3c38e25f9e62a15
-20	1205	7507982641533092	CMakeFiles/Git_Hive.dir/Board.cpp.obj	2eb6672bc4e0cab7
-1205	1605	7507982653388772	Git_Hive.exe	ec2f1dd47a2ea9fc
+23	1066	7507991420385997	CMakeFiles/Git_Hive.dir/Piece.cpp.obj	e3c38e25f9e62a15
+1	1077	7507991420163911	CMakeFiles/Git_Hive.dir/main.cpp.obj	be53fa97f46f0e83
+1084	1449	7507991430990227	Git_Hive.exe	3783529f136eeeb1
+12	1084	7507991420270525	CMakeFiles/Git_Hive.dir/Board.cpp.obj	2eb6672bc4e0cab7
+2	382	7507996891509820	build.ninja	84e569d2e6d47c27

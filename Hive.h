@@ -54,22 +54,6 @@ public:
     }
 };
 //-------------------------棋盘---------------------------
-    /*
-class Board {
-private:
-    int size;
-    std::vector<std::vector<Hexagon>> grid;
-    void initializeGrid();
-public:
-    Board(int size);
-    ~Board();
-    void addPiece(std::shared_ptr<piecetype::Piece> piece, HexCoord coord);
-    std::shared_ptr<piecetype::Piece> getPieceAt(HexCoord coord) const;
-    void printBoard() const;
-    bool isValidPosition(HexCoord coord) const;
-    bool isPositionOccupied(HexCoord coord) const;
-};
-*/
 class Board {
     private:
         int size;

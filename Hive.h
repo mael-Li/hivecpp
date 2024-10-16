@@ -1,6 +1,6 @@
 //
 // Version 0.03 Created by 李世佳 on 24-10-16.
-//READ:蚂蚁类,以及Queen类和Ant类移动测试
+//READ:蚂蚁类,以及Queen类和Ant类移动测试,移动方法尚未完成
 //
 #pragma once
 #ifndef HIVE_H
@@ -65,6 +65,7 @@ class Board {
         ~Board(){grid.clear();}
         int getSize()const{return size;}
         void addPiece(std::shared_ptr<Piece> piece, HexCoord coord);
+        void removePiece(HexCoord coord);
         std::shared_ptr<Piece> getPieceAt(HexCoord coord) const;
         void printBoard() const;
         bool isValidPosition(HexCoord coord) const;
@@ -73,22 +74,23 @@ class Board {
     };
 
 //-------------------------蜂后---------------------------
-class QueenBee :public piecetype::Piece{
-private:
-public:
-    QueenBee():Piece(piecetype::PieceName::Queen){}
-    //这里重点是实现，蜂后必须在4次操作中被放下，这里的规则或许要写到game里？
-    bool isValidMove(const piecetype::HexCoord &newPosition, const Board &board) const override;
-    void move(Board &board, const piecetype::HexCoord& newPosition) override;
-    std::string getName() const override{return "Q";}
+class QueenBee:public Piece{
+    public:
+        QueenBee():Piece(PieceName::Queen){}
+        //这里重点是实现，蜂后必须在4次操作中被放下，这里的规则或许要写到game里？
+        std::string getName() const override{return "Q";}
+        bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
+        void move(Board &board, const HexCoord& newPosition) override;
+
 
 };
 //-------------------------蚂蚁---------------------------
 class Ant:public Piece {
+    public://注意设置！！
         Ant():Piece(PieceName::Ant){}
         std::string getName() const override{return "A";}
         bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
-        void move(Board &board, const HexCoord &newPosition) override;
+        void move(Board &board, const HexCoord& newPosition) override;
     };
 } // namespace piecetype
 

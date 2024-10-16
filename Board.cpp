@@ -8,6 +8,14 @@ using namespace piecetype;
 void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord) {
     grid[coord] = piece;
 }
+void Board::removePiece(HexCoord coord) {
+    auto it = grid.find(coord);
+    if(it != grid.end()) {
+        grid.erase(it);
+    }else {
+        std::cerr << "No piece at the given coordinate." << std::endl;
+    }
+}
 std::shared_ptr<Piece> Board::getPieceAt(HexCoord coord) const {
     auto it = grid.find(coord);
     if (it != grid.end()) {
@@ -53,13 +61,12 @@ void Board::printBoard() const {
             if(isValidPosition(coord)) {
                 std::shared_ptr<Piece>piece = getPieceAt(coord);
                 if (piece) {
-                    piece->getName();
                     std::cout << "["<< piece->getName()<<"]";
                 }else {
                     std::cout << "[ ]";
                 }
-                }
             }
-        std::cout << std::endl;
         }
+        std::cout << std::endl;
+    }
 }

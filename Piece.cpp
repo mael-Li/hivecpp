@@ -24,15 +24,17 @@ bool Ant::isValidMove(const HexCoord &newPosition, const Board &board) const {
     //对于蚂蚁类的移动应该满足这些条件，可以沿着棋子移动
     auto neighbers = newPosition.neighbors();
     if(neighbers.empty()) return false;
+    return true;
 }
 
 void Ant::move(Board &board, const HexCoord &newPosition) {
     if(isValidMove(newPosition,board)) {
         setPosition(newPosition);
+        board.removePiece(position);
         board.addPiece(shared_from_this(),newPosition);
     }
     else {
-        std::cerr << "Invalid move for Queen from (" << position.q << ", " << position.r
+        std::cerr << "Invalid move for Ant from (" << position.q << ", " << position.r
                   << ") to (" << newPosition.q << ", " << newPosition.r << ")" << std::endl;
     }
 }

@@ -29,8 +29,9 @@ bool Ant::isValidMove(const HexCoord &newPosition, const Board &board) const {
 
 void Ant::move(Board &board, const HexCoord &newPosition) {
     if(isValidMove(newPosition,board)) {
+        HexCoord oldposition = getPosition();
         setPosition(newPosition);
-        board.removePiece(position);
+        board.removePiece(oldposition);
         board.addPiece(shared_from_this(),newPosition);
     }
     else {
@@ -38,5 +39,9 @@ void Ant::move(Board &board, const HexCoord &newPosition) {
                   << ") to (" << newPosition.q << ", " << newPosition.r << ")" << std::endl;
     }
 }
+HexCoord Ant::getPosition() const {
+    return position;
+}
+
 
 

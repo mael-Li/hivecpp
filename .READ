@@ -1,0 +1,7 @@
+Repository"GIT_HIVE"
+
+PART 1 更新日志
+    Version 0.01
+        基类：棋子，棋盘，棋格，
+        派生类：Queen类
+        功能：简单的运行运输

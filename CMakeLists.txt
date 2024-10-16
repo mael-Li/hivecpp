@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 14)
 add_executable(Git_Hive main.cpp
         Hive.h
         Board.cpp
-        QueenBee.cpp
         Piece.cpp
         HexCoordHash.h
         HexCoord.h

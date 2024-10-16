@@ -7,7 +7,7 @@ using namespace piecetype;
 
 void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord) {
     grid[coord] = piece;
-    //这里是要将piece的位置赋值 piece->setPosition(coord);
+    piece->setPosition(coord);
 }
 void Board::removePiece(HexCoord coord) {
     auto it = grid.find(coord);

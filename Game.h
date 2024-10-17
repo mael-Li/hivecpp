@@ -22,7 +22,7 @@ private:
 class Player {
 public:
     virtual ~Player() {}
-    virtual void makeMove(piecetype::Board& board) = 0;
+    virtual void makeMove(piecetype::Board& board,int) = 0;
     void setName(std::string n){name = n;}
     std::string getName() const { return name; }
 private:
@@ -32,13 +32,13 @@ private:
 class HumanPlayer : public Player {
 public:
     HumanPlayer(std::string name);
-    void makeMove(piecetype::Board& board) override;
+    void makeMove(piecetype::Board& board,int) override;
 };
 
 class AIPlayer : public Player {
 public:
     AIPlayer(std::string name);
-    void makeMove(piecetype::Board& board) override;
+    void makeMove(piecetype::Board& board,int) override;
 };
 
 #endif //GAME_H

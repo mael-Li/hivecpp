@@ -1,7 +1,7 @@
 //
-// Version 0.03 Created by 李世佳 on 24-10-16.
-//READ:完成game的基本搭建，开始了一次游戏
-//BUG:无限循环（）
+// Version 0.05 Created by 李世佳 on 24-10-17.
+//READ:控制台菜单基本搭建完毕，可以正常运行
+//BUG:ai的棋子没有打印
 //
 #pragma once
 #ifndef HIVE_H

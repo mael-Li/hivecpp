@@ -1,7 +1,7 @@
 //
 // Version 0.03 Created by 李世佳 on 24-10-16.
 //READ:完成game的基本搭建，开始了一次游戏
-//BUG:无限循环
+//BUG:无限循环（）
 //
 #pragma once
 #ifndef HIVE_H

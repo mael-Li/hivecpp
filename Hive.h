@@ -1,7 +1,7 @@
 //
 // Version 0.05 Created by 李世佳 on 24-10-17.
-//READ:控制台菜单基本搭建完毕，可以正常运行
-//BUG:ai的棋子没有打印
+//READ:调试移动棋子
+//BUG: 目前缺少对于棋子新位置的检测功能，要添加这部分的逻辑
 //
 #pragma once
 #ifndef HIVE_H

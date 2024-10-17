@@ -8,7 +8,6 @@
 #include <vector>
 
 class Player;
-
 class Game {
 public:
     void start();
@@ -18,7 +17,6 @@ private:
     std::vector<std::shared_ptr<Player>> players;
 
 };
-
 class Player {
 public:
     virtual ~Player() {}
@@ -28,13 +26,11 @@ public:
 private:
     std::string name;
 };
-
 class HumanPlayer : public Player {
 public:
     HumanPlayer(std::string name);
     void makeMove(piecetype::Board& board,int) override;
 };
-
 class AIPlayer : public Player {
 public:
     AIPlayer(std::string name);

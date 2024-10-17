@@ -20,19 +20,16 @@ int getMenuChoice() {
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ignore rest of line
             continue;
         }
-
         switch (choice) {
             case 1: // Place Piece
                 std::cout << "Placing a piece...\n";
-            // Add logic for placing a piece
             return 1;
             case 2: // Move Piece
                 std::cout << "Moving a piece...\n";
-            // Add logic for moving a piece
             return 2;
             case 3: // Exit
                 std::cout << "Exiting the game...\n";
-            return 3;
+            return 0;
             default:
                 std::cout << "Unsupported option.\n";
         }
@@ -41,17 +38,16 @@ int getMenuChoice() {
 }
 Game::Game() : board(5) {
     // 初始化玩家
-    players.push_back(std::make_shared<HumanPlayer>("Human"));
-    players.push_back(std::make_shared<AIPlayer>("AI"));
+    players.push_back(std::make_shared<HumanPlayer>("Human 1"));
+    //players.push_back(std::make_shared<HumanPlayer>("Human 2"));
 }
 void Game::start() {
     // 游戏主循环
-    int commandorder;
     while (true) {
         for (auto player : players) {
             std::cout << "It's " << player->getName() << "'s turn." << std::endl;
             // 显示菜单并获取用户的选择
-            commandorder = getMenuChoice();
+            const int commandorder = getMenuChoice();
             player->makeMove(board,commandorder);
             std::cout << "Current board state:" << std::endl;
             board.printBoard();
@@ -62,12 +58,12 @@ void Game::start() {
 HumanPlayer::HumanPlayer(std::string n){setName(n);}
 
 void HumanPlayer::makeMove(piecetype::Board& board,int c) {
-    std::cout << getName() << "please enter your type of :";
     std::string command;
     //std::cin >> command;
     if(c == 1) command = "place";
     else if(c == 2) command = "move";
     if (command == "place") {
+        std::cout << getName() << " please enter your type of :";
         std::string pieceType;
         std::cin >> pieceType;
         int x, y;
@@ -88,15 +84,20 @@ void HumanPlayer::makeMove(piecetype::Board& board,int c) {
         board.addPiece(piece, HexCoord(x, y));
     } else if (command == "move") {
         int fromX, fromY, toX, toY;
-        std::cin >> fromX >> fromY >> toX >> toY;
-        // 获取棋子
-        auto piece = board.getPieceAt(HexCoord(fromX, fromY));
-        if (piece) {
-            // 移动棋子
-            piece->move(board, HexCoord(toX, toY));
-        } else {
-            std::cout << "No piece at the given coordinate." << std::endl;
-        }
+        std::cout<<"please enter the position you want to move:";
+        std::cin >> fromX >> fromY;
+        std::cout<<"please enter the new position you want to move";
+        std::cin >> toX >> toY;
+        //if (board.isPositionOccupied(HexCoord(fromX,fromY))){//检测该地方是否有棋子
+            //std::cerr << "Position is occupied (" << fromX << ", " << fromY<<")"<<std::endl;}
+            auto piece = board.getPieceAt(HexCoord(fromX, fromY));
+            // 获取棋子
+            if (piece) {
+                // 移动棋子
+                piece->move(board, HexCoord(toX, toY));
+            } else {
+                std::cout << "No piece at the given coordinate." << std::endl;
+            }
     } else {
         std::cout << "Invalid command." << std::endl;
     }

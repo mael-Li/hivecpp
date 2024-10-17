@@ -66,9 +66,13 @@ void AIPlayer::makeMove(piecetype::Board& board) {
     // AI 的逻辑来决定移动
     std::cout << getName() << " is making a move..." << std::endl;
     // 示例移动逻辑
+    auto queen = std::make_shared<QueenBee>();
+    board.addPiece(queen,HexCoord(1,1));
+    /*
     auto pieces = board.getAllPiecesOnBoard(board.getSize());
     if (!pieces.empty()) {
         auto piece = pieces.front();
         piece->move(board, HexCoord(1, 1)); // 示例移动
     }
+    */
 }

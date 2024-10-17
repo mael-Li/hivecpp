@@ -22,7 +22,7 @@ void Game::start() {
     }
 }
 
-HumanPlayer::HumanPlayer(std::string name){setName(name);}
+HumanPlayer::HumanPlayer(std::string n){setName(n);}
 
 void HumanPlayer::makeMove(piecetype::Board& board) {
     std::cout << getName() << ", enter your move (e.g., 'place piece at x y' or 'move fromX fromY toX toY'): ";

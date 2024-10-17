@@ -23,7 +23,7 @@ class Player {
 public:
     virtual ~Player() {}
     virtual void makeMove(piecetype::Board& board) = 0;
-    void setName(std::string name){name = name;}
+    void setName(std::string n){name = n;}
     std::string getName() const { return name; }
 private:
     std::string name;

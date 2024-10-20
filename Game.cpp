@@ -104,15 +104,17 @@ void HumanPlayer::makeMove(Board& board, const int c) {
         std::cout << "Invalid command." << std::endl;
     }
 }
-/*
-AIPlayer::AIPlayer(std::string n){setName(n);}
+AIPlayer::AIPlayer(std::string n) {
+    setName(n);
+    setid(PlayerID::playerai);
+}
 
 void AIPlayer::makeMove(piecetype::Board& board,int) {
     // AI 的逻辑来决定移动
     std::cout << getName() << " is making a move..." << std::endl;
     // 示例移动逻辑
-    auto queen = std::make_shared<QueenBee>();
-    board.addPiece(queen,HexCoord(1,1));
+    auto queen = std::make_shared<QueenBee>(PlayerID::playerai);
+    board.addPiece(queen,HexCoord(1,1), PlayerID::playerai);
 
     auto pieces = board.getAllPiecesOnBoard(board.getSize());
     if (!pieces.empty()) {
@@ -121,4 +123,3 @@ void AIPlayer::makeMove(piecetype::Board& board,int) {
     }
 
 }
-*/

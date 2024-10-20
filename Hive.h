@@ -1,7 +1,7 @@
 //
-// Version 0.05 Created by 李世佳 on 24-10-17.
-//READ:调试移动棋子
-//BUG: 目前缺少对于棋子新位置的检测功能，要添加这部分的逻辑
+// Version 0.06 Created by 李世佳 on 24-10-20.
+//READ:目前加入了不同玩家所属的棋子
+//BUG: 没有加入基于棋子的玩家id来进行移动的项目
 //
 #pragma once
 #ifndef HIVE_H
@@ -18,7 +18,7 @@ namespace piecetype {
     class Board;
     class Piece;
     enum class PieceName { Queen, Ant, Spider, Beetle, Grasshopper };
-    enum class PlayerID {player1,player2};
+    enum class PlayerID {player1,player2,playerai};
 // 定义蜂巢坐标结构
 
 // 定义蜂巢格子类

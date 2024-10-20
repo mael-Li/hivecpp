@@ -59,7 +59,7 @@ void Board::printBoard() const {
     index++;
     std::string player;
     for (int row =-size;row<=size;++row) {
-        for (int col = 0;col<size;++col) {
+        for (int col = -size;col<size;++col) {
             HexCoord coord(row, col);
             if(isValidPosition(coord)) {
                 std::shared_ptr<Piece>piece = getPieceAt(coord);

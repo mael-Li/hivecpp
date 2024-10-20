@@ -36,7 +36,7 @@ public:
 };
 class AIPlayer : public Player {
 public:
-    AIPlayer(std::string name);
+    AIPlayer(std::string);
     void makeMove(Board& board,int) override;
 };
 

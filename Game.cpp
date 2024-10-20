@@ -57,16 +57,17 @@ void Game::start() {
 HumanPlayer::HumanPlayer(std::string n,PlayerID a){setName(n);setid(a);}
 
 void HumanPlayer::makeMove(Board& board, const int c) {
+    index++;
     std::string command;
     std::string player;
+    std::string pieceType;
     if(getid() == PlayerID::player1) player = "Player 1";
     else player = "Player 2";
     //std::cin >> command;
-    if(c == 1) command = "place";
-    else if(c == 2) command = "move";
+if(c == 1) command = "place";
+else if(c == 2) command = "move";
     if (command == "place") {
         std::cout << player << ", please enter your type of :";
-        std::string pieceType;
         std::cin >> pieceType;
         int x, y;
         std::cout<<"please enter your position of piece:";

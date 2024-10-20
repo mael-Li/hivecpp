@@ -22,9 +22,9 @@ void QueenBee::move(Board &board, const HexCoord &newPosition) {
 }
 bool Ant::isValidMove(const HexCoord &newPosition, const Board &board) const {
     //对于蚂蚁类的移动应该满足这些条件，可以沿着棋子移动
-    auto neighbers = newPosition.neighbors();
-    if(neighbers.empty()) return false;
-    return true;
+    //auto neighbers = newPosition.neighbors();
+    //if(neighbers.empty()) return false;
+    return board.ishasNeighber(newPosition);
 }
 
 void Ant::move(Board &board, const HexCoord &newPosition) {

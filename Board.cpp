@@ -66,7 +66,6 @@ std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {
 
 void Board::printBoard() const {
     std::cout<<"Board["<<index<<"]"<<std::endl;
-    index++;
     std::string player;
     for (int row =-size;row<=size;++row) {
         for (int col = -size;col<size;++col) {

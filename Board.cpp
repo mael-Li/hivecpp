@@ -57,15 +57,19 @@ std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {
 void Board::printBoard() const {
     std::cout<<"Board["<<index<<"]"<<std::endl;
     index++;
+    std::string player;
     for (int row =-size;row<=size;++row) {
         for (int col = 0;col<size;++col) {
             HexCoord coord(row, col);
             if(isValidPosition(coord)) {
                 std::shared_ptr<Piece>piece = getPieceAt(coord);
                 if (piece) {
-                    std::cout << "["<< piece->getName()<<"]";
+                    if(piece->getID() == PlayerID::player1) player = "1";
+                    else player = "2";
+                    std::cout << "["<< piece->getName();
+                    std::cout<<player<<"]";
                 }else {
-                    std::cout << "[ ]";
+                    std::cout << "[  ]";
                 }
             }
         }

@@ -13,7 +13,6 @@ int getMenuChoice() {
             std::cout << i + 1 << ". " << options[i] << "\n";
         }
         std::cout << "Choose an option: ";
-
         if (!(std::cin >> choice) || choice < 1 || choice > static_cast<int>(options.size())) {
             std::cout << "Invalid input, please try again.\n";
             std::cin.clear(); // Reset failbit

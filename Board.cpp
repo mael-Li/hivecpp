@@ -5,10 +5,10 @@
 using namespace piecetype;
 
 
-void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord,PlayerId a) {
+void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord, PlayerID player) {
     grid[coord] = piece;
     piece->setPosition(coord);
-    piece->setID(a);
+    piece->setID(player);
 }
 void Board::removePiece(HexCoord coord) {
     auto it = grid.find(coord);
@@ -18,14 +18,6 @@ void Board::removePiece(HexCoord coord) {
         std::cerr << "No piece at the given coordinate." << std::endl;
     }
 }
-bool Board::isPieceOwnedBy(HexCoord coord,PlayerId player) const {
-        auto it = grid.find(coord);
-        if (it != grid.end() && it->second->getID() == player) {
-            return true;
-        }
-        return false;
-}
-
 std::shared_ptr<Piece> Board::getPieceAt(HexCoord coord) const {
     auto it = grid.find(coord);
     if (it != grid.end()) {
@@ -65,18 +57,15 @@ std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {
 void Board::printBoard() const {
     std::cout<<"Board["<<index<<"]"<<std::endl;
     index++;
-    std::string id;
     for (int row =-size;row<=size;++row) {
         for (int col = 0;col<size;++col) {
             HexCoord coord(row, col);
             if(isValidPosition(coord)) {
                 std::shared_ptr<Piece>piece = getPieceAt(coord);
-                if(piece->getID()==PlayerId::player1) id="1";
-                else id="2";
-                if (piece!=nullptr&&isPieceOwnedBy(coord,PlayerId::player1)) {
+                if (piece) {
                     std::cout << "["<< piece->getName()<<"]";
                 }else {
-                    std::cout << "[  ]";
+                    std::cout << "[ ]";
                 }
             }
         }

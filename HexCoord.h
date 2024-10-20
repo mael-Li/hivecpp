@@ -32,7 +32,6 @@ namespace piecetype {
             result.emplace_back(q, r + 1);
             return result;
         }
-
         bool operator==(const HexCoord& other) const {
             // 比较逻辑
             return q ==other.q&&r ==other.r;

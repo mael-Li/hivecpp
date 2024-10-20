@@ -14,7 +14,7 @@ bool QueenBee::isValidMove(const HexCoord &newPosition, const Board &board) cons
 void QueenBee::move(Board &board, const HexCoord &newPosition) {
     if (isValidMove(newPosition,board)) {
         setPosition(newPosition);
-        board.addPiece(shared_from_this(), newPosition);
+        board.addPiece(shared_from_this(), newPosition,getID());
     } else {
         std::cerr << "Invalid move for Queen from (" << position.q << ", " << position.r
                   << ") to (" << newPosition.q << ", " << newPosition.r << ")" << std::endl;
@@ -32,7 +32,7 @@ void Ant::move(Board &board, const HexCoord &newPosition) {
         HexCoord oldposition = getPosition();
         setPosition(newPosition);
         board.removePiece(oldposition);
-        board.addPiece(shared_from_this(),newPosition);
+        board.addPiece(shared_from_this(),newPosition,getID());
     }
     else {
         std::cerr << "Invalid move for Ant from (" << position.q << ", " << position.r

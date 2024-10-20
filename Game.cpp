@@ -32,7 +32,7 @@ int getMenuChoice() {
             return 2;
             case 3: // Exit
                 std::cout << "Exiting the game...\n";
-            return 3;
+            return 0;
             default:
                 std::cout << "Unsupported option.\n";
         }
@@ -41,17 +41,16 @@ int getMenuChoice() {
 }
 Game::Game() : board(5) {
     // 初始化玩家
-    players.push_back(std::make_shared<HumanPlayer>("Human"));
-    players.push_back(std::make_shared<AIPlayer>("AI"));
+    players.push_back(std::make_shared<HumanPlayer>("Human",PlayerId::player1));
+    players.push_back(std::make_shared<HumanPlayer>("Human",PlayerId::player2));
 }
 void Game::start() {
     // 游戏主循环
-    int commandorder;
     while (true) {
         for (auto player : players) {
             std::cout << "It's " << player->getName() << "'s turn." << std::endl;
             // 显示菜单并获取用户的选择
-            commandorder = getMenuChoice();
+            int commandorder = getMenuChoice();
             player->makeMove(board,commandorder);
             std::cout << "Current board state:" << std::endl;
             board.printBoard();
@@ -59,14 +58,18 @@ void Game::start() {
     }
 }
 
-HumanPlayer::HumanPlayer(std::string n){setName(n);}
+HumanPlayer::HumanPlayer(std::string n,PlayerId a){setName(n);setId(a);}
 
 void HumanPlayer::makeMove(piecetype::Board& board,int c) {
-    std::cout << getName() << "please enter your type of :";
+    std::string player;
+    if(getid() == PlayerId::player1) player ="player1";
+    else player = "player2";
+    std::cout << player<< ",please enter your type of :";
     std::string command;
     //std::cin >> command;
     if(c == 1) command = "place";
     else if(c == 2) command = "move";
+//放置棋子的逻辑
     if (command == "place") {
         std::string pieceType;
         std::cin >> pieceType;
@@ -77,7 +80,7 @@ void HumanPlayer::makeMove(piecetype::Board& board,int c) {
         // 创建棋子实例
         std::shared_ptr<Piece> piece;
         if (pieceType == "Q") {
-            piece = std::make_shared<QueenBee>();
+            piece = std::make_shared<QueenBee>(getid());
         } else if (pieceType == "A") {
             piece = std::make_shared<Ant>();
         } else {
@@ -85,7 +88,8 @@ void HumanPlayer::makeMove(piecetype::Board& board,int c) {
             return;
         }
         // 放置棋子
-        board.addPiece(piece, HexCoord(x, y));
+        board.addPiece(piece, HexCoord(x, y),getid());
+//移动棋子的逻辑
     } else if (command == "move") {
         int fromX, fromY, toX, toY;
         std::cin >> fromX >> fromY >> toX >> toY;
@@ -101,6 +105,7 @@ void HumanPlayer::makeMove(piecetype::Board& board,int c) {
         std::cout << "Invalid command." << std::endl;
     }
 }
+/*
 AIPlayer::AIPlayer(std::string n){setName(n);}
 
 void AIPlayer::makeMove(piecetype::Board& board,int) {
@@ -109,11 +114,12 @@ void AIPlayer::makeMove(piecetype::Board& board,int) {
     // 示例移动逻辑
     auto queen = std::make_shared<QueenBee>();
     board.addPiece(queen,HexCoord(1,1));
-    /*
+//
     auto pieces = board.getAllPiecesOnBoard(board.getSize());
     if (!pieces.empty()) {
         auto piece = pieces.front();
         piece->move(board, HexCoord(1, 1)); // 示例移动
     }
-    */
+//
 }
+    */

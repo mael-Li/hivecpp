@@ -8,7 +8,6 @@
 #include <vector>
 
 class Player;
-
 class Game {
 public:
     void start();
@@ -25,13 +24,16 @@ public:
     virtual void makeMove(piecetype::Board& board,int) = 0;
     void setName(std::string n){name = n;}
     std::string getName() const { return name; }
+    piecetype::PlayerId getid()const{return id;}
+    void setId(piecetype::PlayerId a){id = a;}
 private:
     std::string name;
+    piecetype::PlayerId id;
 };
 
 class HumanPlayer : public Player {
 public:
-    HumanPlayer(std::string name);
+    HumanPlayer(std::string name, piecetype::PlayerId a);
     void makeMove(piecetype::Board& board,int) override;
 };
 

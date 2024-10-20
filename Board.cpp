@@ -31,6 +31,16 @@ bool Board::isValidPosition(HexCoord coord) const {
 bool Board::isPositionOccupied(HexCoord coord) const {
     return grid.find(coord) != grid.end();
 }
+bool Board::ishasNeighber(HexCoord coord) const {
+    std::vector<HexCoord> neighbors = coord.neighbors();
+    for (const auto& neighbor : neighbors) {
+        if (isValidPosition(neighbor) && isPositionOccupied(neighbor)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {
     std::vector<std::shared_ptr<Piece>> pieces;
     // 获取棋盘的最大尺寸

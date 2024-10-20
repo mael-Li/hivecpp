@@ -75,6 +75,7 @@ class Board {
         void printBoard() const;
         bool isValidPosition(HexCoord coord) const;
         bool isPositionOccupied(HexCoord coord) const;
+        bool ishasNeighber(HexCoord coord)const;
         std::vector<std::shared_ptr<Piece>>getAllPiecesOnBoard(int size)const;
     };
 

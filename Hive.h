@@ -49,6 +49,8 @@ public:
     virtual std::string getName() const = 0;
     virtual HexCoord getPosition() const { return position; }
     Piece(const PieceName& name,const PlayerID &player) : name(name),ID(player){}
+
+    PieceName getEumName()const {return name;}
     // 设置棋子的位置
     void setPosition(const HexCoord& pos) {
         position = pos;
@@ -64,9 +66,11 @@ class Board {
     private:
         int size;
         std::unordered_map<HexCoord, std::shared_ptr<Piece>> grid;
+        std::unordered_map<PlayerID, std::unordered_map<PieceName, int>> piecesAvailable;
         void initializeGrid();
+        void initializePiecesAvailable();
     public:
-        Board(int size):size(size){}
+        Board(int size):size(size){initializePiecesAvailable();}
         ~Board(){grid.clear();}
         int getSize()const{return size;}
         void addPiece(std::shared_ptr<Piece> piece, HexCoord coord,PlayerID);

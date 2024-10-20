@@ -1,14 +1,38 @@
 //
 // Created by 李世佳 on 24-10-14.
 //
+#include <cassert>
+
 #include"Hive.h"
 using namespace piecetype;
 
+void Board::initializePiecesAvailable() {
+    // 设置每种棋子的最大数量
+    piecesAvailable[PlayerID::player1][PieceName::Queen] = 1;
+    piecesAvailable[PlayerID::player1][PieceName::Ant] = 1;
+    //piecesAvailable[PlayerID::player1][PieceName:] = 1;
+    //piecesAvailable[PlayerID::player1][PieceName:] = 1;
+    //piecesAvailable[PlayerID::player1][PieceName:] = 1;
+    //piecesAvailable[PlayerID::player1][PieceName:] = 1;
+
+    piecesAvailable[PlayerID::player2][PieceName::Queen] = 1;
+    piecesAvailable[PlayerID::player2][PieceName::Ant] = 1;
+    //piecesAvailable[PlayerID::player2][PieceName:] = 1;
+    //piecesAvailable[PlayerID::player2][PieceName:] = 1;
+    //piecesAvailable[PlayerID::player2][PieceName:] = 1;
+    //piecesAvailable[PlayerID::player2][PieceName:] = 1;
+}
+
+
 
 void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord, PlayerID player) {
+    if (piecesAvailable[player][piece->getEumName()] <= 0) {
+        throw std::runtime_error("No more pieces of this type available.");
+    }
     grid[coord] = piece;
     piece->setPosition(coord);
     piece->setID(player);
+    piecesAvailable[player][piece->getEumName()]--; // 减少可用的棋子数量
 }
 void Board::removePiece(HexCoord coord) {
     auto it = grid.find(coord);

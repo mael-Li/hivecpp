@@ -5,9 +5,10 @@
 using namespace piecetype;
 
 
-void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord) {
+void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord, const PlayerID c) {
     grid[coord] = piece;
     piece->setPosition(coord);
+    piece->setPlayerID(c);
 }
 void Board::removePiece(HexCoord coord) {
     auto it = grid.find(coord);

@@ -14,12 +14,12 @@
 #include <iostream>
 #include <unordered_map>
 static int index=0;
+static int move_i = 1;
 namespace piecetype {
     class Board;
     class Piece;
     enum class PieceName { Queen, Ant, Spider, Beetle, Grasshopper };
-// 定义蜂巢坐标结构
-
+    enum class PlayerID{ player1, player2,playerAI};
 // 定义蜂巢格子类
 class Hexagon {
 public:
@@ -40,6 +40,7 @@ class Piece : public std::enable_shared_from_this<Piece>{
 protected:
     HexCoord position;
     PieceName name;
+    PlayerID id;
 public:
     virtual ~Piece() {}
     virtual void move(Board& board, const HexCoord& newPosition) = 0;
@@ -50,6 +51,12 @@ public:
     // 设置棋子的位置
     void setPosition(const HexCoord& pos) {
         position = pos;
+    }
+    PlayerID getPlayerID() {
+        return id;
+    }
+    PlayerID setPlayerID(const PlayerID c) {
+        id = c;
     }
     std::shared_ptr<Piece> shared_from_this() {
         return std::enable_shared_from_this<Piece>::shared_from_this();
@@ -65,7 +72,7 @@ class Board {
         Board(int size):size(size){}
         ~Board(){grid.clear();}
         int getSize()const{return size;}
-        void addPiece(std::shared_ptr<Piece> piece, HexCoord coord);
+        void addPiece(std::shared_ptr<Piece> piece, HexCoord coord,PlayerID C);
         void removePiece(HexCoord coord);
         std::shared_ptr<Piece> getPieceAt(HexCoord coord) const;
         void printBoard() const;

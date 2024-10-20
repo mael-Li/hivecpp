@@ -6,7 +6,6 @@
 #define GAME_H
 #include "Hive.h"
 #include <vector>
-
 class Player;
 class Game {
 public:
@@ -15,7 +14,6 @@ public:
 private:
     piecetype::Board board;
     std::vector<std::shared_ptr<Player>> players;
-
 };
 class Player {
 public:

@@ -3,6 +3,8 @@
 //
 #include "Game.h"
 using namespace piecetype;
+
+
 int getMenuChoice() {
     std::vector<std::string> options = {"Place Piece", "Move Piece", "Exit"};
     int choice = -1;
@@ -39,18 +41,19 @@ int getMenuChoice() {
 Game::Game() : board(5) {
     // 初始化玩家
     players.push_back(std::make_shared<HumanPlayer>("Human 1"));
-    //players.push_back(std::make_shared<HumanPlayer>("Human 2"));
+    players.push_back(std::make_shared<HumanPlayer>("Human 2"));
 }
 void Game::start() {
     // 游戏主循环
     while (true) {
         for (auto player : players) {
-            std::cout << "It's " << player->getName() << "'s turn." << std::endl;
+            std::cout << "It's " << player->getName() << "'s turn,ID is"<<player-><<std::endl;
             // 显示菜单并获取用户的选择
             const int commandorder = getMenuChoice();
             player->makeMove(board,commandorder);
             std::cout << "Current board state:" << std::endl;
             board.printBoard();
+            if (commandorder == 0) break;
         }
     }
 }
@@ -109,7 +112,7 @@ void AIPlayer::makeMove(piecetype::Board& board,int) {
     std::cout << getName() << " is making a move..." << std::endl;
     // 示例移动逻辑
     auto queen = std::make_shared<QueenBee>();
-    board.addPiece(queen,HexCoord(1,1));
+    board.addPiece(queen,HexCoord(1,1), PlayerID::playerAI);
     /*
     auto pieces = board.getAllPiecesOnBoard(board.getSize());
     if (!pieces.empty()) {

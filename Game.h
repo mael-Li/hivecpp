@@ -12,6 +12,14 @@ class Game {
 public:
     void start();
     Game();
+    std::string getOpponentName(PlayerID player) {
+        for (const auto& ptr : players) {
+            if (ptr->getId() != player) {
+                return ptr->getName();
+            }
+        }
+        return "Unkowned"; // 应该不会到达这里
+    }
 private:
     Board board;
     std::vector<std::shared_ptr<Player>> players;
@@ -24,10 +32,10 @@ public:
     void setName(std::string n){name = n;}
     std::string getName() const { return name; }
     piecetype::PlayerID getid()const{return id;}
-    void setid(const piecetype::PlayerID a){id = a;}
+    void setid(const PlayerID a){id = a;}
 private:
     std::string name;
-    piecetype::PlayerID id;
+    PlayerID id;
 };
 class HumanPlayer : public Player {
 public:

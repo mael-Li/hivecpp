@@ -9,14 +9,14 @@ using namespace piecetype;
 void Board::initializePiecesAvailable() {
     // 设置每种棋子的最大数量
     piecesAvailable[PlayerID::player1][PieceName::Queen] = 1;
-    piecesAvailable[PlayerID::player1][PieceName::Ant] = 1;
+    piecesAvailable[PlayerID::player1][PieceName::Ant] = 7;
     //piecesAvailable[PlayerID::player1][PieceName:] = 1;
     //piecesAvailable[PlayerID::player1][PieceName:] = 1;
     //piecesAvailable[PlayerID::player1][PieceName:] = 1;
     //piecesAvailable[PlayerID::player1][PieceName:] = 1;
 
     piecesAvailable[PlayerID::player2][PieceName::Queen] = 1;
-    piecesAvailable[PlayerID::player2][PieceName::Ant] = 1;
+    piecesAvailable[PlayerID::player2][PieceName::Ant] = 7;
     //piecesAvailable[PlayerID::player2][PieceName:] = 1;
     //piecesAvailable[PlayerID::player2][PieceName:] = 1;
     //piecesAvailable[PlayerID::player2][PieceName:] = 1;
@@ -63,6 +63,26 @@ bool Board::ishasNeighber(HexCoord coord) const {
         }
     }
     return false;
+}
+bool Board::isQueenBeeSurround(PlayerID player) const {
+    const HexCoord& queenBeePos = queenBeePositions.at(player);
+    std::vector<HexCoord> neighbors = queenBeePos.neighbors();
+    // 检查蜂后周围的六个位置是否全部被占据
+    for (const auto& neighbor : neighbors) {
+        if (!isPositionOccupied(neighbor)) {
+            return false; // 至少有一个空位，蜂后可以移动
+        }
+    }
+    return true; // 所有位置都被占据，蜂后无法移动
+}
+PlayerID Board::checkVictory() const {
+    if (isQueenBeeSurround(PlayerID::player1)) {
+        return PlayerID::player1;
+    }
+    if (isQueenBeeSurround(PlayerID::player2)) {
+        return PlayerID::player2;
+    }
+    return PlayerID::playernobody; // 无胜利者，可以返回任意玩家
 }
 
 std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {

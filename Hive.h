@@ -18,7 +18,7 @@ namespace piecetype {
     class Board;
     class Piece;
     enum class PieceName { Queen, Ant, Spider, Beetle, Grasshopper };
-    enum class PlayerID {player1,player2,playerai};
+    enum class PlayerID {player1,player2,playerai,playernobody};
 // 定义蜂巢坐标结构
 
 // 定义蜂巢格子类
@@ -67,6 +67,7 @@ class Board {
         int size;
         std::unordered_map<HexCoord, std::shared_ptr<Piece>> grid;
         std::unordered_map<PlayerID, std::unordered_map<PieceName, int>> piecesAvailable;
+        std::unordered_map<PlayerID, HexCoord> queenBeePositions;
         void initializeGrid();
         void initializePiecesAvailable();
     public:
@@ -80,6 +81,8 @@ class Board {
         bool isValidPosition(HexCoord coord) const;
         bool isPositionOccupied(HexCoord coord) const;
         bool ishasNeighber(HexCoord coord)const;
+        bool isQueenBeeSurround(PlayerID)const;
+        PlayerID checkVictory()const;
         std::vector<std::shared_ptr<Piece>>getAllPiecesOnBoard(int size)const;
     };
 

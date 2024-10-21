@@ -38,11 +38,12 @@ int getMenuChoice() {
 Game::Game() : board(5) {
     // 初始化玩家
     players.push_back(std::make_shared<HumanPlayer>("Human 1",PlayerID::player1));
-    players.push_back(std::make_shared<HumanPlayer>("Human 2",PlayerID::player2));
+    //players.push_back(std::make_shared<HumanPlayer>("Human 2",PlayerID::player2));
 }
 void Game::start() {
     // 游戏主循环
-    while (true) {
+    bool gameIsOver = false;
+    while (!gameIsOver) {
         for (auto player : players) {
             std::cout << "It's " << player->getName() << "'s turn." << std::endl;
             // 显示菜单并获取用户的选择
@@ -50,6 +51,12 @@ void Game::start() {
             player->makeMove(board,commandorder);
             std::cout << "Current board state:" << std::endl;
             board.printBoard();
+            if (board.isQueenBeeSurround(player->getid())) {
+                gameIsOver = true;
+                std::cout << "Player " << player->getName() << " has been surrounded! "
+                          << "The winner is !" << std::endl;
+                break;
+            }
         }
     }
 }

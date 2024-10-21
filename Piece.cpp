@@ -26,7 +26,6 @@ bool Ant::isValidMove(const HexCoord &newPosition, const Board &board) const {
     //if(neighbers.empty()) return false;
     return board.ishasNeighber(newPosition);
 }
-
 void Ant::move(Board &board, const HexCoord &newPosition) {
     if(isValidMove(newPosition,board)) {
         HexCoord oldposition = getPosition();

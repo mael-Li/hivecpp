@@ -13,11 +13,8 @@ public:
     void start();
     Game();
     std::string getOpponentName(PlayerID player) {
-        for (const auto& ptr : players) {
-            if (ptr->getId() != player) {
-                return ptr->getName();
-            }
-        }
+        for(const auto &it : players)
+            it->getid()
         return "Unkowned"; // 应该不会到达这里
     }
 private:
@@ -27,11 +24,12 @@ private:
 };
 class Player {
 public:
+    Player(std::string n,const PlayerID& a):name(n),id(a){}
     virtual ~Player() {}
     virtual void makeMove(piecetype::Board& board,int) = 0;
     void setName(std::string n){name = n;}
     std::string getName() const { return name; }
-    piecetype::PlayerID getid()const{return id;}
+    PlayerID getid()const{return id;}
     void setid(const PlayerID a){id = a;}
 private:
     std::string name;
@@ -39,7 +37,7 @@ private:
 };
 class HumanPlayer : public Player {
 public:
-    HumanPlayer(std::string ,PlayerID);
+    HumanPlayer(std::string ,const PlayerID&);
     void makeMove(Board& board,int) override;
 };
 class AIPlayer : public Player {

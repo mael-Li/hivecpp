@@ -61,7 +61,8 @@ void Game::start() {
     }
 }
 
-HumanPlayer::HumanPlayer(std::string n,PlayerID a){setName(n);setid(a);}
+HumanPlayer::HumanPlayer(std::string n,const PlayerID&a):Player(n,a){
+}
 
 void HumanPlayer::makeMove(Board& board, const int c) {
     index++;

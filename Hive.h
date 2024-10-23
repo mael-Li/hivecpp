@@ -83,6 +83,7 @@ class Board {
         bool isPositionOccupied(HexCoord coord) const;
         bool ishasNeighber(HexCoord coord)const;
         bool isQueenBeeSurround(PlayerID)const;
+        void afficheneighber(const PlayerID&)const;
         PlayerID checkVictory()const;
         std::vector<std::shared_ptr<Piece>>getAllPiecesOnBoard(int size)const;
     };

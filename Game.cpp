@@ -52,6 +52,7 @@ void Game::start() {
             player->makeMove(board,commandorder);
             std::cout << "Current board state:" << std::endl;
             board.printBoard();
+            board.afficheneighber(player->getid());
             if (board.isQueenBeeSurround(player->getid())) {
                 gameIsOver = true;
                 winner = getOpponentName(player->getid());
@@ -75,6 +76,7 @@ void HumanPlayer::makeMove(Board& board, const int c) {
     //std::cin >> command;
 if(c == 1) command = "place";
 else if(c == 2) command = "move";
+    else if(c == 4) command = "neighber";
     if (command == "place") {
         std::cout << player << ", please enter your type of :";
         std::cin >> pieceType;
@@ -112,7 +114,7 @@ else if(c == 2) command = "move";
             } else {
                 std::cout << "No piece at the given coordinate." << std::endl;
             }
-    } else {
+    }else {
         std::cout << "Invalid command." << std::endl;
     }
 }

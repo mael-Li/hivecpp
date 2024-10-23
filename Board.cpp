@@ -76,10 +76,22 @@ bool Board::isQueenBeeSurround(PlayerID player) const {
     // 检查蜂后周围的六个位置是否全部被占据
     for (const auto& neighbor : neighbors) {
         if (!isPositionOccupied(neighbor)) {
+            //std::cout<<"The position["<<neighbor.q<<","<<neighbor.r<<"]"<<"is vide"<<std::endl;
             return false; // 至少有一个空位，蜂后可以移动
         }
     }
     return true; // 所有位置都被占据，蜂后无法移动
+}
+void Board::afficheneighber(const PlayerID&player) const {
+    auto it = queenBeePositions.find(player);
+    const HexCoord& queenBeePos = it->second;
+    std::vector<HexCoord> neighbors = queenBeePos.neighbors();
+    // 检查蜂后周围的六个位置是否全部被占据
+    for (const auto& neighbor : neighbors) {
+        if (!isPositionOccupied(neighbor)) {
+            std::cout<<"The position["<<neighbor.q<<","<<neighbor.r<<"]"<<"is vide"<<std::endl;
+        }
+    }
 }
 PlayerID Board::checkVictory() const {
     if (isQueenBeeSurround(PlayerID::player1)) {
@@ -112,7 +124,6 @@ std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {
     }
     return pieces;
 }
-
 
 void Board::printBoard() const {
     std::cout<<"Board["<<index<<"]"<<std::endl;

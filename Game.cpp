@@ -73,9 +73,10 @@ void HumanPlayer::makeMove(Board& board, const int c) {
     std::string pieceType;
     if(getid() == PlayerID::player1) player = "Player 1";
     else player = "Player 2";
-    //std::cin >> command;
+    //将命令导入函数
     if(c == 1) command = "place";
     else if(c == 2) command = "move";
+    //判断
     if (command == "place") {
         std::cout << player << ", please enter your type of :";
         std::cin >> pieceType;

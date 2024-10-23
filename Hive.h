@@ -35,7 +35,6 @@ public:
         this->piece = piece;
     }
 };
-
 // 定义棋子基类
 class Piece : public std::enable_shared_from_this<Piece>{
 protected:
@@ -49,7 +48,7 @@ public:
     virtual std::string getName() const = 0;
     virtual HexCoord getPosition() const { return position; }
     Piece(const PieceName& name,const PlayerID &player) : name(name),ID(player){}
-
+    //这里是返回对应类型的名字
     PieceName getEumName()const {return name;}
     // 设置棋子的位置
     void setPosition(const HexCoord& pos) {
@@ -57,6 +56,7 @@ public:
     }
     PlayerID getID()const{return ID;}
     void setID(const PlayerID& a){ID = a;}
+    //重载这个标准库的函数让其可以正常读取这是个指针的目前值
     std::shared_ptr<Piece> shared_from_this() {
         return std::enable_shared_from_this<Piece>::shared_from_this();
     }
@@ -69,22 +69,30 @@ class Board {
         std::unordered_map<PlayerID, std::unordered_map<PieceName, int>> piecesAvailable;
         std::unordered_map<PlayerID, HexCoord>  queenBeePositions;
         void initializeGrid();
+        //初始化棋子数量
         void initializePiecesAvailable();
     public:
+        //构造器，棋盘规模
         Board(int size):size(size){initializePiecesAvailable();}
         ~Board(){grid.clear();}
         int getSize()const{return size;}
+    //棋盘的基本行为，添加棋子和删除棋子
         void addPiece(std::shared_ptr<Piece> piece, HexCoord coord,PlayerID);
         void removePiece(HexCoord coord);
+    //这里用于在添加棋子时，如果输入的是queen棋子可以直接保存其位置queenBeePositions;
         void setqueenBeePositions(const HexCoord& c,PlayerID a){queenBeePositions.emplace(a,c);}
+        //获得这个棋子，并且是智能指针类型
         std::shared_ptr<Piece> getPieceAt(HexCoord coord) const;
         void printBoard() const;
+    //检查位置合法性
         bool isValidPosition(HexCoord coord) const;
         bool isPositionOccupied(HexCoord coord) const;
         bool ishasNeighber(HexCoord coord)const;
         bool isQueenBeeSurround(PlayerID)const;
+    //打印蜂后邻居的控制位置，用于调试代码
         void afficheneighber(const PlayerID&)const;
         PlayerID checkVictory()const;
+    //获得目前棋盘上的所有棋子
         std::vector<std::shared_ptr<Piece>>getAllPiecesOnBoard(int size)const;
     };
 

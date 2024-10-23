@@ -46,13 +46,6 @@ void Game::start() {
     std::string winner;
     while (!gameIsOver) {
         for (auto player : players) {
-            std::cout << "It's " << player->getName() << "'s turn." << std::endl;
-            // 显示菜单并获取用户的选择
-            const int commandorder = getMenuChoice();
-            player->makeMove(board,commandorder);
-            std::cout << "Current board state:" << std::endl;
-            board.printBoard();
-            board.afficheneighber(player->getid());
             if (board.isQueenBeeSurround(player->getid())) {
                 gameIsOver = true;
                 winner = getOpponentName(player->getid());
@@ -60,6 +53,13 @@ void Game::start() {
                           << "The winner is !" <<winner<<std::endl;
                 break;
             }
+            std::cout << "It's " << player->getName() << "'s turn." << std::endl;
+            // 显示菜单并获取用户的选择
+            const int commandorder = getMenuChoice();
+            player->makeMove(board,commandorder);
+            std::cout << "Current board state:" << std::endl;
+            board.printBoard();
+            board.afficheneighber(player->getid());
         }
     }
 }
@@ -74,9 +74,8 @@ void HumanPlayer::makeMove(Board& board, const int c) {
     if(getid() == PlayerID::player1) player = "Player 1";
     else player = "Player 2";
     //std::cin >> command;
-if(c == 1) command = "place";
-else if(c == 2) command = "move";
-    else if(c == 4) command = "neighber";
+    if(c == 1) command = "place";
+    else if(c == 2) command = "move";
     if (command == "place") {
         std::cout << player << ", please enter your type of :";
         std::cin >> pieceType;

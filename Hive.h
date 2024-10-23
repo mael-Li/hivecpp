@@ -67,7 +67,7 @@ class Board {
         int size;
         std::unordered_map<HexCoord, std::shared_ptr<Piece>> grid;
         std::unordered_map<PlayerID, std::unordered_map<PieceName, int>> piecesAvailable;
-        std::unordered_map<PlayerID, HexCoord> queenBeePositions;
+        std::unordered_map<PlayerID, HexCoord>  queenBeePositions;
         void initializeGrid();
         void initializePiecesAvailable();
     public:
@@ -76,6 +76,7 @@ class Board {
         int getSize()const{return size;}
         void addPiece(std::shared_ptr<Piece> piece, HexCoord coord,PlayerID);
         void removePiece(HexCoord coord);
+        void setqueenBeePositions(const HexCoord& c,PlayerID a){queenBeePositions.emplace(a,c);}
         std::shared_ptr<Piece> getPieceAt(HexCoord coord) const;
         void printBoard() const;
         bool isValidPosition(HexCoord coord) const;

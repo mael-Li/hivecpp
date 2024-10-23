@@ -5,36 +5,39 @@
 #ifndef GAME_H
 #define GAME_H
 #include "Hive.h"
+#include <utility>
 #include <vector>
 using namespace piecetype;
-class Player;
-class Game {
-public:
-    void start();
-    Game();
-    std::string getOpponentName(PlayerID player) {
-        for(const auto &it : players)
-            it->getid()
-        return "Unkowned"; // 应该不会到达这里
-    }
-private:
-    Board board;
-    std::vector<std::shared_ptr<Player>> players;
-
-};
 class Player {
 public:
-    Player(std::string n,const PlayerID& a):name(n),id(a){}
-    virtual ~Player() {}
+    Player(std::string n,const PlayerID& a):name(std::move(n)),id(a){}
+    virtual ~Player(){}
     virtual void makeMove(piecetype::Board& board,int) = 0;
-    void setName(std::string n){name = n;}
+    void setName(const std::string &n){name = n;}
     std::string getName() const { return name; }
     PlayerID getid()const{return id;}
-    void setid(const PlayerID a){id = a;}
 private:
     std::string name;
     PlayerID id;
 };
+
+class Game {
+public:
+    void start();
+    Game();
+private:
+    Board board;
+    std::vector<std::shared_ptr<Player>> players;
+    std::string getOpponentName(PlayerID playerId) const {
+        for (const auto& it : players) {
+            if (it->getid() != playerId) {
+                return it->getName();
+            }
+        }
+        return "Unknown"; // 如果找不到对手，返回 "Unknown" （理论上不应该到达这里）
+    }
+};
+
 class HumanPlayer : public Player {
 public:
     HumanPlayer(std::string ,const PlayerID&);
@@ -42,7 +45,7 @@ public:
 };
 class AIPlayer : public Player {
 public:
-    AIPlayer(std::string);
+    AIPlayer(std::string,const PlayerID&);
     void makeMove(Board& board,int) override;
 };
 

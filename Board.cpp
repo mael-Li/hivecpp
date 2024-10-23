@@ -65,7 +65,13 @@ bool Board::ishasNeighber(HexCoord coord) const {
     return false;
 }
 bool Board::isQueenBeeSurround(PlayerID player) const {
-    const HexCoord& queenBeePos = queenBeePositions.at(player);
+    // 尝试获取指定玩家的蜂后位置
+    auto it = queenBeePositions.find(player);
+    if (it == queenBeePositions.end()) {
+        // 如果键不存在，则蜂后位置未知，可以认为蜂后没有被包围
+        return false;
+    }
+    const HexCoord& queenBeePos = it->second;
     std::vector<HexCoord> neighbors = queenBeePos.neighbors();
     // 检查蜂后周围的六个位置是否全部被占据
     for (const auto& neighbor : neighbors) {
@@ -111,9 +117,9 @@ std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {
 void Board::printBoard() const {
     std::cout<<"Board["<<index<<"]"<<std::endl;
     std::string player;
-    for (int row =-size;row<=size;++row) {
+    for (int row =size;row>=-size;--row) {
         for (int col = -size;col<size;++col) {
-            HexCoord coord(row, col);
+            HexCoord coord(col, row);
             if(isValidPosition(coord)) {
                 std::shared_ptr<Piece>piece = getPieceAt(coord);
                 if (piece) {

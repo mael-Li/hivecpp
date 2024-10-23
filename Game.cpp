@@ -38,11 +38,12 @@ int getMenuChoice() {
 Game::Game() : board(5) {
     // 初始化玩家
     players.push_back(std::make_shared<HumanPlayer>("Human 1",PlayerID::player1));
-    //players.push_back(std::make_shared<HumanPlayer>("Human 2",PlayerID::player2));
+    players.push_back(std::make_shared<HumanPlayer>("Human 2",PlayerID::player2));
 }
 void Game::start() {
     // 游戏主循环
     bool gameIsOver = false;
+    std::string winner;
     while (!gameIsOver) {
         for (auto player : players) {
             std::cout << "It's " << player->getName() << "'s turn." << std::endl;
@@ -53,16 +54,16 @@ void Game::start() {
             board.printBoard();
             if (board.isQueenBeeSurround(player->getid())) {
                 gameIsOver = true;
+                winner = getOpponentName(player->getid());
                 std::cout << "Player " << player->getName() << " has been surrounded! "
-                          << "The winner is !" << std::endl;
+                          << "The winner is !" <<winner<<std::endl;
                 break;
             }
         }
     }
 }
 
-HumanPlayer::HumanPlayer(std::string n,const PlayerID&a):Player(n,a){
-}
+HumanPlayer::HumanPlayer(std::string n,const PlayerID&a):Player(std::move(n),a){}
 
 void HumanPlayer::makeMove(Board& board, const int c) {
     index++;
@@ -84,7 +85,9 @@ else if(c == 2) command = "move";
         // 创建棋子实例
         std::shared_ptr<Piece> piece;
         if (pieceType == "Q") {
+            HexCoord pos(x,y);
             piece = std::make_shared<QueenBee>(getid());
+            board.setqueenBeePositions(pos,getid());
         } else if (pieceType == "A") {
             piece = std::make_shared<Ant>(getid());
         } else {
@@ -113,10 +116,7 @@ else if(c == 2) command = "move";
         std::cout << "Invalid command." << std::endl;
     }
 }
-AIPlayer::AIPlayer(std::string n) {
-    setName(n);
-    setid(PlayerID::playerai);
-}
+AIPlayer::AIPlayer(std::string n,const PlayerID&):Player(std::move(n),PlayerID::playerai){}
 
 void AIPlayer::makeMove(piecetype::Board& board,int) {
     // AI 的逻辑来决定移动

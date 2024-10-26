@@ -124,7 +124,30 @@ class Ant:public Piece {
         bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
         void move(Board &board, const HexCoord& newPosition,const PlayerID&) override;
         HexCoord getPosition() const override;
-    };
+};
+class Spider : public Piece {
+public:
+    Spider(PlayerID player) : Piece(PieceName::Spider, player) {}
+    std::string getName() const override { return "S"; }
+    bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
+    void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
+    HexCoord getPosition() const override;
+};
+class Grasshopper : public Piece {
+public:
+    Grasshopper(PlayerID player) : Piece(PieceName::Grasshopper, player) {}
+    std::string getName() const override { return "G"; }
+    bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
+    void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
+};
+class Beetle : public Piece {
+    Beetle(PlayerID player) : Piece(PieceName::Beetle, player) {}
+    std::string getName() const override { return "B"; }
+    bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
+    void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
+
+};
+
 } // namespace piecetype
 
 #endif //HIVE_H

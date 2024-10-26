@@ -13,7 +13,8 @@
 #include <memory>
 #include <iostream>
 #include <unordered_map>
-static int index=0;
+static int index;
+static int index_ai;
 namespace piecetype {
     class Board;
     class Piece;
@@ -43,7 +44,7 @@ protected:
     PlayerID ID;
 public:
     virtual ~Piece() {}
-    virtual void move(Board& board, const HexCoord& newPosition) = 0;
+    virtual void move(Board& board, const HexCoord& newPosition,const PlayerID&) = 0;
     virtual bool isValidMove(const HexCoord& newPosition, const Board& board) const = 0;
     virtual std::string getName() const = 0;
     virtual HexCoord getPosition() const { return position; }
@@ -61,6 +62,13 @@ public:
         return std::enable_shared_from_this<Piece>::shared_from_this();
     }
 };
+//-------------------------棋盘异常-----------------------
+class Pieceexception :public std::exception{
+    std::string info;
+public:
+    Pieceexception(const char* s)throw():info(s){}
+    const char* what() const noexcept {return info.c_str();}
+};
 //-------------------------棋盘---------------------------
 class Board {
     private:
@@ -68,6 +76,7 @@ class Board {
         std::unordered_map<HexCoord, std::shared_ptr<Piece>> grid;
         std::unordered_map<PlayerID, std::unordered_map<PieceName, int>> piecesAvailable;
         std::unordered_map<PlayerID, HexCoord>  queenBeePositions;
+        bool firstPiecePlaced = false;
         void initializeGrid();
         //初始化棋子数量
         void initializePiecesAvailable();
@@ -103,7 +112,7 @@ class QueenBee:public Piece{
         //这里重点是实现，蜂后必须在4次操作中被放下，这里的规则或许要写到game里？
         std::string getName() const override{return "Q";}
         bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
-        void move(Board &board, const HexCoord& newPosition) override;
+        void move(Board &board, const HexCoord& newPosition,const PlayerID&) override;
 
 
 };
@@ -113,7 +122,7 @@ class Ant:public Piece {
         Ant(PlayerID player):Piece(PieceName::Ant,player){}
         std::string getName() const override{return "A";}
         bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
-        void move(Board &board, const HexCoord& newPosition) override;
+        void move(Board &board, const HexCoord& newPosition,const PlayerID&) override;
         HexCoord getPosition() const override;
     };
 } // namespace piecetype

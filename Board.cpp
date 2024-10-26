@@ -22,17 +22,21 @@ void Board::initializePiecesAvailable() {
     //piecesAvailable[PlayerID::player2][PieceName:] = 1;
     //piecesAvailable[PlayerID::player2][PieceName:] = 1;
 }
-
-
-
 void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord, PlayerID player) {
-    if (piecesAvailable[player][piece->getEumName()] <= 0) {
-        throw std::runtime_error("No more pieces of this type available.");
-    }
-    grid[coord] = piece;
-    piece->setPosition(coord);
-    piece->setID(player);
-    piecesAvailable[player][piece->getEumName()]--; // 减少可用的棋子数量
+    if (!firstPiecePlaced || ishasNeighber(coord)) {
+        if (piecesAvailable[player][piece->getEumName()] <= 0) {
+            throw std::runtime_error("No more pieces of this type available.");
+        }
+        grid[coord] = piece;
+        piece->setPosition(coord);
+        piece->setID(player);
+        piecesAvailable[player][piece->getEumName()]--; // 减少可用的棋子数量
+        if (!firstPiecePlaced) {
+            firstPiecePlaced = true; // 标记首个棋子已放置
+        }
+        }else {
+            throw Pieceexception("New piece must be placed adjacent to an existing piece.");
+        }
 }
 void Board::removePiece(HexCoord coord) {
     auto it = grid.find(coord);
@@ -126,7 +130,9 @@ std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {
 }
 
 void Board::printBoard() const {
-    std::cout<<"Board["<<index<<"]"<<std::endl;
+    index++;
+    int a = index;
+    std::cout<<"Board["<<a<<"]"<<std::endl;
     std::string player;
     for (int row =size;row>=-size;--row) {
         for (int col = -size;col<size;++col) {

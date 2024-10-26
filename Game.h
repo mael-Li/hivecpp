@@ -16,9 +16,11 @@ public:
     void setName(const std::string &n){name = n;}
     std::string getName() const { return name; }
     PlayerID getid()const{return id;}
+    void oneaction(){count++;}
 private:
     std::string name;
     PlayerID id;
+    int count = 0;
 };
 
 class Game {

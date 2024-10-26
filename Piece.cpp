@@ -11,13 +11,12 @@ bool QueenBee::isValidMove(const HexCoord &newPosition, const Board &board) cons
     }
     return !board.isPositionOccupied(newPosition);
 }
-void QueenBee::move(Board &board, const HexCoord &newPosition) {
+void QueenBee::move(Board &board, const HexCoord &newPosition,const PlayerID&) {
     if (isValidMove(newPosition,board)) {
         setPosition(newPosition);
         board.addPiece(shared_from_this(), newPosition,ID);
     } else {
-        std::cerr << "Invalid move for Queen from (" << position.q << ", " << position.r
-                  << ") to (" << newPosition.q << ", " << newPosition.r << ")" << std::endl;
+        throw Pieceexception("Queen can't move");
     }
 }
 bool Ant::isValidMove(const HexCoord &newPosition, const Board &board) const {
@@ -26,7 +25,11 @@ bool Ant::isValidMove(const HexCoord &newPosition, const Board &board) const {
     if(neighbers.empty()) return false;
     return board.ishasNeighber(newPosition);
 }
-void Ant::move(Board &board, const HexCoord &newPosition) {
+void Ant::move(Board &board, const HexCoord &newPosition,const PlayerID&i) {
+    auto currentPiece = board.getPieceAt(position);
+    if (currentPiece && currentPiece->getID() != i) {
+        throw Pieceexception("Only the owner of the piece can move it.");
+    }
     if(isValidMove(newPosition,board)) {
         HexCoord oldposition = getPosition();
         setPosition(newPosition);
@@ -34,8 +37,7 @@ void Ant::move(Board &board, const HexCoord &newPosition) {
         board.addPiece(shared_from_this(),newPosition, ID);
     }
     else {
-        std::cerr << "Invalid move for Ant from (" << position.q << ", " << position.r
-                  << ") to (" << newPosition.q << ", " << newPosition.r << ")" << std::endl;
+        throw Pieceexception("Invalid move position");
     }
 }
 HexCoord Ant::getPosition() const {

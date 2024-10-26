@@ -41,33 +41,44 @@ Game::Game() : board(5) {
     players.push_back(std::make_shared<HumanPlayer>("Human 2",PlayerID::player2));
 }
 void Game::start() {
-    // 游戏主循环
     bool gameIsOver = false;
     std::string winner;
+    int currentPlayerIndex = 0; // 当前玩家索引
     while (!gameIsOver) {
-        for (auto player : players) {
-            if (board.isQueenBeeSurround(player->getid())) {
-                gameIsOver = true;
-                winner = getOpponentName(player->getid());
-                std::cout << "Player " << player->getName() << " has been surrounded! "
-                          << "The winner is !" <<winner<<std::endl;
-                break;
-            }
-            std::cout << "It's " << player->getName() << "'s turn." << std::endl;
-            // 显示菜单并获取用户的选择
-            const int commandorder = getMenuChoice();
-            player->makeMove(board,commandorder);
-            std::cout << "Current board state:" << std::endl;
-            board.printBoard();
-            board.afficheneighber(player->getid());
+        auto currentPlayer = players[currentPlayerIndex];
+        //检测胜利与否
+        if (board.isQueenBeeSurround(currentPlayer->getid())) {
+            gameIsOver = true;
+            winner = getOpponentName(currentPlayer->getid());
+            std::cout << "Player " << currentPlayer->getName()
+                      << " has been surrounded! The winner is " << winner << "!" << std::endl;
+            break;
         }
+        //显示哪个玩家的回合
+        std::cout << "It's " << currentPlayer->getName() << "'s turn." << std::endl;
+        // 显示菜单并获取用户的选择
+        int commandOrder = getMenuChoice();
+        // 在makeMove函数内处理异常输入
+        try {
+            currentPlayer->makeMove(board, commandOrder);
+        } catch (const std::exception& e) {
+            std::cout << "An error occurred: " << e.what()
+                      << " Please try your action again." << std::endl;
+            continue; // 继续当前玩家的回合
+        }
+        std::cout << "Current board state:" << std::endl;
+        board.printBoard();
+        // 切换到下一个玩家
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+        index++;
     }
 }
 
 HumanPlayer::HumanPlayer(std::string n,const PlayerID&a):Player(std::move(n),a){}
 
 void HumanPlayer::makeMove(Board& board, const int c) {
-    index++;
+    oneaction();
+    bool command_move = false;
     std::string command;
     std::string player;
     std::string pieceType;
@@ -93,44 +104,83 @@ void HumanPlayer::makeMove(Board& board, const int c) {
         } else if (pieceType == "A") {
             piece = std::make_shared<Ant>(getid());
         } else {
-            std::cout << "Unknown piece type." << std::endl;
-            return;
+            throw Pieceexception("Unknown piece type.");
         }
         // 放置棋子
         board.addPiece(piece, HexCoord(x, y),getid());
     } else if (command == "move") {
         int fromX, fromY, toX, toY;
-        std::cout<<"please enter the position you want to move:";
-        std::cin >> fromX >> fromY;
+        while (!command_move) {
+            std::cout << "Please enter the position you want to move (x y): ";
+            std::cin >> fromX >> fromY;
+            auto piece = board.getPieceAt(HexCoord(fromX, fromY));
+            if (std::cin.fail()) {
+                std::cin.clear(); // 清除错误标志
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 忽略错误输入直到下一个换行符
+                std::cerr << "Invalid input. Please enter integers only." << std::endl;
+            }
+
+            if (!piece) {
+                throw Pieceexception("No piece at the given coordinate.");
+                //std::cout << "No piece at the given coordinate." << std::endl;
+            }else {
+                // 如果找到了棋子，标记输入为有效，并退出循环
+                command_move = true;
+            }
+        }
+        auto piece = board.getPieceAt(HexCoord(fromX, fromY));
         std::cout<<"please enter the new position you want to move";
         std::cin >> toX >> toY;
-        //if (board.isPositionOccupied(HexCoord(fromX,fromY))){//检测该地方是否有棋子
-            //std::cerr << "Position is occupied (" << fromX << ", " << fromY<<")"<<std::endl;}
-            auto piece = board.getPieceAt(HexCoord(fromX, fromY));
-            // 获取棋子
-            if (piece) {
-                // 移动棋子
-                piece->move(board, HexCoord(toX, toY));
-            } else {
-                std::cout << "No piece at the given coordinate." << std::endl;
-            }
-    }else {
+        piece->move(board, HexCoord(toX, toY),getid());
+    }
+    else {
         std::cout << "Invalid command." << std::endl;
     }
 }
+
 AIPlayer::AIPlayer(std::string n,const PlayerID&):Player(std::move(n),PlayerID::playerai){}
 
 void AIPlayer::makeMove(piecetype::Board& board,int) {
     // AI 的逻辑来决定移动
+    /*
+    index_ai++;
+    int command = index_ai;
     std::cout << getName() << " is making a move..." << std::endl;
     // 示例移动逻辑
-    auto queen = std::make_shared<QueenBee>(PlayerID::playerai);
-    board.addPiece(queen,HexCoord(1,1), PlayerID::playerai);
+    switch(command) {
+        case 0:
+            auto queen = std::make_shared<QueenBee>(PlayerID::playerai);
+            int x,y;
+            std::mt19937 generator(std::random_device{}());
+            std::uniform_int_distribution<> distribution(-board.getSize(), board.getSize());
+            x = distribution(generator);
+            y = distribution(generator);
+            board.addPiece(queen,HexCoord(x,y), PlayerID::playerai);
+        case 1:
+            auto ant = std::make_shared<Ant>(PlayerID::playerai);
+            std::mt19937 generator1(std::random_device{}());
+            std::uniform_int_distribution<> distribution1(-board.getSize(), board.getSize());
+            x = distribution1(generator);
+            y = distribution1(generator);
+            board.addPiece(queen,HexCoord(x,y), PlayerID::playerai);
+            index_ai =0;
+        default:
+            std::cout << "Unknown command." << std::endl;
+        break;
+    }
 
+    auto queen = std::make_shared<QueenBee>(PlayerID::playerai);
+    int x,y;
+    std::mt19937 generator(std::random_device{}());
+    std::uniform_int_distribution<> distribution(-board.getSize(), board.getSize());
+    x = distribution(generator);
+    y = distribution(generator);
+    board.addPiece(queen,HexCoord(x,y), PlayerID::playerai);
+    */
     auto pieces = board.getAllPiecesOnBoard(board.getSize());
     if (!pieces.empty()) {
         auto piece = pieces.front();
-        piece->move(board, HexCoord(1, 1)); // 示例移动
+        piece->move(board, HexCoord(1, 1),PlayerID::playerai); // 示例移动
     }
 
 }

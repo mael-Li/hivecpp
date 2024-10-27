@@ -38,6 +38,7 @@ private:
         }
         return "Unknown"; // 如果找不到对手，返回 "Unknown" （理论上不应该到达这里）
     }
+
 };
 
 class HumanPlayer : public Player {

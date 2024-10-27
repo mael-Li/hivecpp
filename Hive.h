@@ -79,12 +79,13 @@ class Board {
         bool firstPiecePlaced = false;
         void initializeGrid();
         //初始化棋子数量
-        void initializePiecesAvailable();
+
     public:
         //构造器，棋盘规模
         Board(int size):size(size){initializePiecesAvailable();}
         ~Board(){grid.clear();}
         int getSize()const{return size;}
+        void initializePiecesAvailable();
     //棋盘的基本行为，添加棋子和删除棋子
         void addPiece(std::shared_ptr<Piece> piece, HexCoord coord,PlayerID);
         void removePiece(HexCoord coord);

@@ -13,6 +13,7 @@
 #include <memory>
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
 static int index;
 static int index_ai;
 namespace piecetype {
@@ -26,14 +27,28 @@ namespace piecetype {
 class Hexagon {
 public:
     HexCoord coord;
-    std::shared_ptr<Piece> piece;
+    std::vector<std::shared_ptr<Piece>> pieces;
+    //std::shared_ptr<Piece> piece;
     // 默认构造函数，默认构造函数储存一个指针
-    Hexagon() : piece(nullptr) {}
+    Hexagon() : pieces(){}//piece(nullptr),
 
-    Hexagon(HexCoord coord) : coord(coord), piece(nullptr) {}
+    Hexagon(HexCoord coord) : coord(coord),pieces() {}//piece(nullptr)
+    // 移除最上方的棋子
+    std::shared_ptr<Piece> removeTopPiece() {
+        auto topPiece = pieces.back();
+        pieces.pop_back();
+        return topPiece;
+    }
+    // 获取最上方的棋子
+    std::shared_ptr<Piece> getTopPiece() const {
+        if (!pieces.empty()) {
+            return pieces.back();
+        }
+        return nullptr;
+    }
 
-    void setPiece(std::shared_ptr<Piece> piece) {
-        this->piece = piece;
+    void addPiece(std::shared_ptr<Piece> piece) {
+        pieces.push_back(piece);
     }
 };
 // 定义棋子基类
@@ -42,12 +57,14 @@ protected:
     HexCoord position;
     PieceName name;
     PlayerID ID;
+    std::vector<HexCoord> moveHistory;
+
 public:
     virtual ~Piece() {}
     virtual void move(Board& board, const HexCoord& newPosition,const PlayerID&) = 0;
     virtual bool isValidMove(const HexCoord& newPosition, const Board& board) const = 0;
     virtual std::string getName() const = 0;
-    virtual HexCoord getPosition() const { return position; }
+    virtual HexCoord getPosition() const = 0;
     Piece(const PieceName& name,const PlayerID &player) : name(name),ID(player){}
     //这里是返回对应类型的名字
     PieceName getEumName()const {return name;}
@@ -57,6 +74,30 @@ public:
     }
     PlayerID getID()const{return ID;}
     void setID(const PlayerID& a){ID = a;}
+    //修改
+    /*
+    virtual bool canMove(const Board& board) const {
+        // 检查是否被完全包围
+        HexCoord pos = getPosition();
+        auto neighbors = pos.neighbors();
+        bool surrounded = true;
+        for (const auto& neighbor : neighbors) {
+            if (!board.isPositionOccupied(neighbor)) {
+                surrounded = false;
+                break;
+            }
+        }
+        return !surrounded;
+    }
+    */
+    //修改
+    void recordMove(const HexCoord& newPos) {
+        moveHistory.push_back(newPos);
+    }
+    //修改
+    HexCoord getLastPosition() const {
+        return moveHistory.empty() ? position : moveHistory.back();
+    }
     //重载这个标准库的函数让其可以正常读取这是个指针的目前值
     std::shared_ptr<Piece> shared_from_this() {
         return std::enable_shared_from_this<Piece>::shared_from_this();
@@ -73,37 +114,85 @@ public:
 class Board {
     private:
         int size;
-        std::unordered_map<HexCoord, std::shared_ptr<Piece>> grid;
-        std::unordered_map<PlayerID, std::unordered_map<PieceName, int>> piecesAvailable;
-        std::unordered_map<PlayerID, HexCoord>  queenBeePositions;
+        std::unordered_map<HexCoord, Hexagon> grid;
+        std::unordered_map<PlayerID, HexCoord> queenBeePositions;
         bool firstPiecePlaced = false;
+        // 添加以下成员变量来跟踪游戏状态
+        bool queenPlacementRequired[2] = {false, false}; // 跟踪是否需要放置蜂后
+        int turnCount = 0; // 回合计数
+void dfsExplore(const HexCoord& current,
+            std::unordered_set<HexCoord>& visited,
+            const std::unordered_set<HexCoord>& occupied) const {
+        visited.insert(current);
+        // 检查所有相邻位置
+        for (const auto& neighbor : current.neighbors()) {
+            // 如果邻居位置有棋子且未访问过
+            if (occupied.count(neighbor) && !visited.count(neighbor)) {
+                dfsExplore(neighbor, visited, occupied);
+            }
+        }
+    }
         void initializeGrid();
         //初始化棋子数量
 
     public:
         //构造器，棋盘规模
+         std::unordered_map<PlayerID, std::unordered_map<PieceName, int>> piecesAvailable;
         Board(int size):size(size){initializePiecesAvailable();}
         ~Board(){grid.clear();}
         int getSize()const{return size;}
         void initializePiecesAvailable();
     //棋盘的基本行为，添加棋子和删除棋子
         void addPiece(std::shared_ptr<Piece> piece, HexCoord coord,PlayerID);
-        void removePiece(HexCoord coord);
+        std::shared_ptr<Piece> removePiece(HexCoord coord);
     //这里用于在添加棋子时，如果输入的是queen棋子可以直接保存其位置queenBeePositions;
         void setqueenBeePositions(const HexCoord& c,PlayerID a){queenBeePositions.emplace(a,c);}
         //获得这个棋子，并且是智能指针类型
-        std::shared_ptr<Piece> getPieceAt(HexCoord coord) const;
         void printBoard() const;
     //检查位置合法性
         bool isValidPosition(HexCoord coord) const;
         bool isPositionOccupied(HexCoord coord) const;
         bool ishasNeighber(HexCoord coord)const;
         bool isQueenBeeSurround(PlayerID)const;
+        bool isTopPiece(const HexCoord& coord, PlayerID id)const;
+        bool canPlacePiece(const HexCoord& coord,PlayerID playerid)const;
+        bool isHiveContinuous() const;
+        bool isValidMove(const HexCoord& from, const HexCoord& to) const;
+        bool willMoveMaintainContinuity(const HexCoord& from, const HexCoord& to) const;
     //打印蜂后邻居的控制位置，用于调试代码
         void afficheneighber(const PlayerID&)const;
         PlayerID checkVictory()const;
     //获得目前棋盘上的所有棋子
         std::vector<std::shared_ptr<Piece>>getAllPiecesOnBoard(int size)const;
+    //获得目标位置的棋子
+        std::shared_ptr<Piece> getPieceAt(HexCoord coord) const;
+    //获得TOP棋子
+        std::shared_ptr<Piece> getTopPiece(HexCoord coord)const;
+    //获取所有邻居位置
+    std::vector<HexCoord> getOccupiedNeighbors(const HexCoord& coord) const;
+    //回合管理的方法
+    void nextTurn() {
+        turnCount++;
+        // 第四回合后必须放置蜂后
+        if (turnCount == 4) {
+            queenPlacementRequired[0] = true;
+            queenPlacementRequired[1] = true;
+        }
+    }
+    void printNeighbors(const HexCoord& coord) const {
+        std::vector<HexCoord> neighbors = coord.neighbors();
+        std::cout << "Neighbors of (" << coord.q << ", " << coord.r << "):" << std::endl;
+
+        for (const auto& neighbor : neighbors) {
+            std::cout << "(" << neighbor.q << ", " << neighbor.r << ")" << std::endl;
+        }
+    }
+    void printPieceInfoAt(const HexCoord& coord) const;
+
+private:
+    void clearQueenBeePosition(PlayerID playerId) {
+        queenBeePositions.erase(playerId);
+    }
     };
 
 //-------------------------蜂后---------------------------
@@ -114,8 +203,8 @@ class QueenBee:public Piece{
         std::string getName() const override{return "Q";}
         bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
         void move(Board &board, const HexCoord& newPosition,const PlayerID&) override;
-
-
+        bool canSlideTo(const HexCoord& newposition,const Board& board)const;
+        HexCoord getPosition() const override;
 };
 //-------------------------蚂蚁---------------------------
 class Ant:public Piece {
@@ -126,6 +215,7 @@ class Ant:public Piece {
         void move(Board &board, const HexCoord& newPosition,const PlayerID&) override;
         HexCoord getPosition() const override;
 };
+
 class Spider : public Piece {
 public:
     Spider(PlayerID player) : Piece(PieceName::Spider, player) {}
@@ -134,6 +224,7 @@ public:
     void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
     HexCoord getPosition() const override;
 };
+    /*
 class Grasshopper : public Piece {
 public:
     Grasshopper(PlayerID player) : Piece(PieceName::Grasshopper, player) {}
@@ -142,13 +233,31 @@ public:
     void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
 };
 class Beetle : public Piece {
+public:
     Beetle(PlayerID player) : Piece(PieceName::Beetle, player) {}
     std::string getName() const override { return "B"; }
     bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
     void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
 
 };
+    */
+    //EXCEPTION--------------------------------------------------------------------
+    class QueenNotPlacedException : public Pieceexception {
+    public:
+        QueenNotPlacedException() : Pieceexception("Queen must be placed by turn 4") {}
+    };
 
+    class InvalidMoveException : public Pieceexception {
+    public:
+        InvalidMoveException(const std::string& reason)
+            : Pieceexception(("Invalid move: " + reason).c_str()) {}
+    };
+
+    class HiveContinuityException : public std::runtime_error {
+    public:
+        explicit HiveContinuityException(const std::string& message)
+            : std::runtime_error(message) {}
+    };
 } // namespace piecetype
 
 #endif //HIVE_H

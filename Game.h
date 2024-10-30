@@ -12,7 +12,7 @@ class Player {
 public:
     Player(std::string n,const PlayerID& a):name(std::move(n)),id(a){}
     virtual ~Player(){}
-    virtual void makeMove(piecetype::Board& board,int) = 0;
+    virtual void makeMove(Board& board,int) = 0;
     void setName(const std::string &n){name = n;}
     std::string getName() const { return name; }
     PlayerID getid()const{return id;}

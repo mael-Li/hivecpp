@@ -100,10 +100,19 @@ void HumanPlayer::makeMove(Board& board, const int c) {
         if (pieceType == "Q") {
             HexCoord pos(x,y);
             piece = std::make_shared<QueenBee>(getid());
-            board.setqueenBeePositions(pos,getid());
         } else if (pieceType == "A") {
             piece = std::make_shared<Ant>(getid());
-        } else {
+        }
+        /*
+        else if(pieceType == "S"){
+            piece = std::make_shared<Spider>(getid());
+        }else if(pieceType == "B"){
+            piece = std::make_shared<Beetle>(getid());
+        }else if(pieceType == "G"){
+            piece = std::make_shared<Grasshopper>(getid());
+        }
+        */
+        else{
             throw Pieceexception("Unknown piece type.");
         }
         // 放置棋子
@@ -113,25 +122,29 @@ void HumanPlayer::makeMove(Board& board, const int c) {
         while (!command_move) {
             std::cout << "Please enter the position you want to move (x y): ";
             std::cin >> fromX >> fromY;
-            auto piece = board.getPieceAt(HexCoord(fromX, fromY));
             if (std::cin.fail()) {
                 std::cin.clear(); // 清除错误标志
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 忽略错误输入直到下一个换行符
                 std::cerr << "Invalid input. Please enter integers only." << std::endl;
+                continue; // 重新开始循环
             }
 
+            auto piece = board.getPieceAt(HexCoord(fromX, fromY));
             if (!piece) {
                 throw Pieceexception("No piece at the given coordinate.");
-                //std::cout << "No piece at the given coordinate." << std::endl;
-            }else {
-                // 如果找到了棋子，标记输入为有效，并退出循环
-                command_move = true;
             }
+            command_move = true; // 找到棋子，标记输入为有效，并退出循环
         }
         auto piece = board.getPieceAt(HexCoord(fromX, fromY));
-        std::cout<<"please enter the new position you want to move";
-        std::cin >> toX >> toY;
-        piece->move(board, HexCoord(toX, toY),getid());
+        std::cout << "Please enter the new position you want to move to (x y): ";
+        if (std::cin >> toX >> toY && std::cin.good()) { // 检查输入的有效性
+            piece->move(board, HexCoord(toX, toY), getid());
+        } else {
+            std::cin.clear(); // 清除错误标志
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 忽略错误输入直到下一个换行符
+            std::cerr << "Invalid input. Please enter integers only." << std::endl;
+            // 可能需要重新提示用户输入或者做其他处理
+        }
     }
     else {
         std::cout << "Invalid command." << std::endl;

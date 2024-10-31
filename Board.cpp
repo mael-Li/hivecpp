@@ -36,27 +36,40 @@ void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord, PlayerID play
         throw std::invalid_argument("Invalid coordinate position");
     }
 
-    // 4. 创建或获取格子
+    // 4. 检查是否是"眼"位置
+    if (isEye(coord)) {
+        // 如果是"眼"位置，只允许蚱蜢跳入
+        if (piece->getEumName() != PieceName::Grasshopper) {
+            throw InvalidMoveException("Only Grasshopper can jump into an eye");
+        }
+    }
+
+    // 剩余的现有逻辑...
     if (grid.find(coord) == grid.end()) {
         grid[coord] = Hexagon();
     }
 
-    // 5. 更新可用棋子数量
-    auto pieceType = piece->getEumName();
-    if (piecesAvailable[player][pieceType] <= 0) {
+    auto& hexagon = grid[coord];
+    if (!hexagon.pieces.empty()) {
+        if (piece->getEumName() != PieceName::Beetle) {
+            throw std::runtime_error("Only Beetle pieces can stack on other pieces");
+        }
+    }
+
+    // 更新可用棋子数量
+    if (piecesAvailable[player][piece->getEumName()] <= 0) {
         throw std::runtime_error("No more pieces of this type available");
     }
-    piecesAvailable[player][pieceType]--;
+    piecesAvailable[player][piece->getEumName()]--;
 
-    // 6. 添加棋子到格子,并且更新棋子位置
+    // 添加棋子到格子,并且更新棋子位置
     piece->setPosition(coord);
     grid[coord].pieces.push_back(piece);
 
-    // 7. 更新首次放置状态
     if (!firstPiecePlaced) {
         firstPiecePlaced = true;
     }
-    // 8. 如果是蜂后，更新蜂后位置
+
     if (piece->getEumName() == PieceName::Queen) {
         setqueenBeePositions(coord, player);
     }
@@ -252,7 +265,23 @@ bool Board::willMoveMaintainContinuity(const HexCoord &from, const HexCoord &to)
     }
     return false;
 }
+bool Board::isEye(const HexCoord& coord) const {
+    // 获取周围的邻居位置
+    auto neighbors = coord.neighbors();
+    std::vector<HexCoord> occupiedNeighbors;
 
+    // 统计被占据的相邻格子
+    for (const auto& neighbor : neighbors) {
+        if (isPositionOccupied(neighbor)) {
+            occupiedNeighbors.push_back(neighbor);
+        }
+    }
+    // 如果周围有5个或更多棋子，这个位置就是一个"眼"
+    if (occupiedNeighbors.size() >= 5) {
+        return true;
+    }
+    return false;
+}
 void Board::afficheneighber(const PlayerID&player) const {
     auto it = queenBeePositions.find(player);
     const HexCoord& queenBeePos = it->second;

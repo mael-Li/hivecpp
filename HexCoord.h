@@ -36,6 +36,20 @@ namespace piecetype {
             // 比较逻辑
             return q ==other.q&&r ==other.r;
         }
+
+        const HexCoord operator-(const HexCoord & hex_coord) const {
+            return HexCoord(q - hex_coord.q, r - hex_coord.r);
+        }
+
+        HexCoord &operator+=(const HexCoord & hex_coord) {
+            r += hex_coord.r;
+            q += hex_coord.q;
+            return *this;
+        }
+
+        bool operator!=(const HexCoord & hex_coord) const {
+            return r != hex_coord.r || q != hex_coord.q;
+        }
     };
 }
 #endif //HEXCOORD_H

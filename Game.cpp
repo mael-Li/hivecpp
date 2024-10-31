@@ -103,7 +103,6 @@ void HumanPlayer::makeMove(Board& board, const int c) {
         } else if (pieceType == "A") {
             piece = std::make_shared<Ant>(getid());
         }
-        /*
         else if(pieceType == "S"){
             piece = std::make_shared<Spider>(getid());
         }else if(pieceType == "B"){
@@ -111,7 +110,6 @@ void HumanPlayer::makeMove(Board& board, const int c) {
         }else if(pieceType == "G"){
             piece = std::make_shared<Grasshopper>(getid());
         }
-        */
         else{
             throw Pieceexception("Unknown piece type.");
         }

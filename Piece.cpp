@@ -74,13 +74,15 @@ void QueenBee::move(Board &board, const HexCoord &newPosition,const PlayerID&cur
 bool Ant::isValidMove(const HexCoord &newPosition, const Board &board) const {
     // 检查新位置是否有效
     if (!board.isValidPosition(newPosition)) {
-
         return false;
-
     }
     // 检查新位置是否已被占据
     if (!board.isPositionOccupied(newPosition)) {
         return false;
+    }
+    // 检查是否是"眼"位置
+    if (board.isEye(newPosition)) {
+        return false; // 蚂蚁不能移动到"眼"位置
     }
     // 获取新位置的所有邻居
     std::vector<HexCoord> neighbors = newPosition.neighbors();
@@ -133,7 +135,10 @@ bool Spider::isValidMove(const HexCoord &newPosition, const Board &board) const 
     // 1. 基本验证
     if (!board.isValidPosition(newPosition)) return false;
     if (position == newPosition) return false;
-
+    // 检查是否是"眼"位置
+    if (board.isEye(newPosition)) {
+        return false; // 蚂蚁不能移动到"眼"位置
+    }
     // 2. 检查移动步数是否精确为3步
     std::vector<HexCoord> path;
     HexCoord currentPos = position;
@@ -178,7 +183,6 @@ void Spider::move(Board &board, const HexCoord &newPosition, const PlayerID &cur
     if (!isValidMove(newPosition, board)) {
         throw InvalidMoveException("Invalid spider move");
     }
-
     // 3. 尝试移动并检查蜂巢连续性
     HexCoord oldPosition = getPosition();
     auto piece = board.removePiece(oldPosition);
@@ -195,8 +199,108 @@ void Spider::move(Board &board, const HexCoord &newPosition, const PlayerID &cur
     recordMove(newPosition);
 }
 
+bool Grasshopper::isValidMove(const HexCoord& newPosition, const Board& board) const{
+    // 1. 基本验证
+    if (!board.isValidPosition(newPosition)) return false;
+    if (position == newPosition) return false;
 
+    // 2. 检查跳跃方向是否在同一直线上
+    if (position.q != newPosition.q &&
+        position.r != newPosition.r &&
+        position.q + position.r != newPosition.q + newPosition.r) {
+        return false;
+        }
 
+    // 3. 检查跳跃路径
+    HexCoord currentPos = position;
+    HexCoord direction = newPosition - currentPos;
+    bool hasJumpedOverPiece = false;
+
+    currentPos += direction;
+    while (currentPos != newPosition) {
+        if (!board.isPositionOccupied(currentPos)) {
+            return false;
+        }
+        hasJumpedOverPiece = true;
+        currentPos += direction;
+    }
+
+    // 4. 确保至少跳过了一个棋子
+    if (!hasJumpedOverPiece) {
+        return false;
+    }
+
+    // 5. 目标位置检查
+    // 如果目标位置已被占据，但是一个"眼"，允许跳入
+    if (board.isPositionOccupied(newPosition) && !board.isEye(newPosition)) {
+        return false;
+    }
+
+    return true;
+}
+void Grasshopper::move(Board &board, const HexCoord &newPosition, const PlayerID &currentPlayer) {
+    // 1. 验证移动者身份
+    if (ID != currentPlayer) {
+        throw InvalidMoveException("Only the owner can move this piece");
+    }
+
+    // 2. 验证移动的合法性
+    if (!isValidMove(newPosition, board)) {
+        throw InvalidMoveException("Invalid grasshopper move");
+    }
+
+    // 3. 尝试移动并检查蜂巢连续性
+    HexCoord oldPosition = getPosition();
+    auto piece = board.removePiece(oldPosition);
+
+    // 4. 临时移除后检查连续性
+    if (!board.isHiveContinuous()) {
+        board.addPiece(piece, oldPosition, ID);
+        throw HiveContinuityException("Grasshopper move disrupts hive continuity");
+    }
+
+    // 5. 执行移动
+    setPosition(newPosition);
+    board.addPiece(piece, newPosition, ID);
+    recordMove(newPosition);
+}
+bool Beetle::isValidMove(const HexCoord &newPosition, const Board &board) const {
+    // 1. 基本验证
+    if (!board.isValidPosition(newPosition)) return false;
+    if (position == newPosition) return false;
+
+    // 2. 检查移动距离是否为1，甲虫只能移动相邻的格子
+    if (position.distance(newPosition) > 1) return false;
+
+    // 返回true，因为甲虫可以爬上其他棋子或空格子
+    return true;
+}
+void Beetle::move(Board &board, const HexCoord &newPosition, const PlayerID &currentPlayer) {
+    // 1. 验证移动者身份
+    if (ID != currentPlayer) {
+        throw InvalidMoveException("Only the owner can move this piece");
+    }
+
+    // 2. 验证移动的合法性
+    if (!isValidMove(newPosition, board)) {
+        throw InvalidMoveException("Invalid beetle move");
+    }
+
+    // 3. 尝试移动并检查蜂巢连续性
+    HexCoord oldPosition = getPosition();
+    auto piece = board.removePiece(oldPosition);
+
+    // 4. 临时移除后检查连续性
+    if (!board.isHiveContinuous()) {
+        board.addPiece(piece, oldPosition, ID);
+        throw HiveContinuityException("Beetle move disrupts hive continuity");
+    }
+
+    // 5. 执行移动
+    setPosition(newPosition);
+    board.addPiece(piece, newPosition, ID);
+    recordMove(newPosition);
+}
 
 HexCoord QueenBee::getPosition() const {
     return position;
@@ -207,8 +311,12 @@ HexCoord Ant::getPosition() const {
 HexCoord Spider::getPosition() const {
     return  position;
 }
-
-
+HexCoord Grasshopper::getPosition() const {
+    return position;
+}
+HexCoord Beetle::getPosition() const {
+    return position;
+}
 
 
 

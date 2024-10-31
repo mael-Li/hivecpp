@@ -161,6 +161,8 @@ void dfsExplore(const HexCoord& current,
         bool isValidMove(const HexCoord& from, const HexCoord& to) const;
     //！！检测移动后是否会对连续性有影响
         bool willMoveMaintainContinuity(const HexCoord& from, const HexCoord& to) const;
+    //检查是不是眼
+        bool isEye(const HexCoord& coord)const;
     //打印蜂后邻居的控制位置，用于调试代码
         void afficheneighber(const PlayerID&)const;
         PlayerID checkVictory()const;
@@ -195,7 +197,7 @@ private:
     void clearQueenBeePosition(PlayerID playerId) {
         queenBeePositions.erase(playerId);
     }
-    };
+};
 
 //-------------------------蜂后---------------------------
 class QueenBee:public Piece{
@@ -233,6 +235,7 @@ public:
     std::string getName() const override { return "G"; }
     bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
     void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
+    HexCoord getPosition() const override;
 };
 class Beetle : public Piece {
 public:
@@ -240,7 +243,7 @@ public:
     std::string getName() const override { return "B"; }
     bool isValidMove(const HexCoord &newPosition, const Board &board) const override;
     void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
-
+    HexCoord getPosition() const override;
 };
     //EXCEPTION--------------------------------------------------------------------
     class QueenNotPlacedException : public Pieceexception {

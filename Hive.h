@@ -156,8 +156,10 @@ void dfsExplore(const HexCoord& current,
         bool isQueenBeeSurround(PlayerID)const;
         bool isTopPiece(const HexCoord& coord, PlayerID id)const;
         bool canPlacePiece(const HexCoord& coord,PlayerID playerid)const;
+    //！！对于棋盘的连续性检测
         bool isHiveContinuous() const;
         bool isValidMove(const HexCoord& from, const HexCoord& to) const;
+    //！！检测移动后是否会对连续性有影响
         bool willMoveMaintainContinuity(const HexCoord& from, const HexCoord& to) const;
     //打印蜂后邻居的控制位置，用于调试代码
         void afficheneighber(const PlayerID&)const;
@@ -224,7 +226,7 @@ public:
     void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
     HexCoord getPosition() const override;
 };
-    /*
+
 class Grasshopper : public Piece {
 public:
     Grasshopper(PlayerID player) : Piece(PieceName::Grasshopper, player) {}
@@ -240,7 +242,6 @@ public:
     void move(Board &board, const HexCoord &newPosition, const PlayerID &) override;
 
 };
-    */
     //EXCEPTION--------------------------------------------------------------------
     class QueenNotPlacedException : public Pieceexception {
     public:

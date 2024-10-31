@@ -59,13 +59,13 @@ void QueenBee::move(Board &board, const HexCoord &newPosition,const PlayerID&cur
     HexCoord oldPosition = getPosition();
     auto piece = board.removePiece(oldPosition);
 
-    // 临时移除后检查连续性
+    // 4. 临时移除后检查连续性
     if (!board.isHiveContinuous()) {
         board.addPiece(piece, oldPosition, ID);
         throw HiveContinuityException("Ant is't contiuity");
     }
 
-    // 4. 执行移动
+    // 5. 执行移动
     setPosition(newPosition);
     board.addPiece(piece, newPosition, ID);
     board.setqueenBeePositions(newPosition, ID);
@@ -130,10 +130,69 @@ void Ant::move(Board &board, const HexCoord &newPosition, const PlayerID &curren
     recordMove(newPosition);
 }
 bool Spider::isValidMove(const HexCoord &newPosition, const Board &board) const {
+    // 1. 基本验证
+    if (!board.isValidPosition(newPosition)) return false;
+    if (position == newPosition) return false;
 
+    // 2. 检查移动步数是否精确为3步
+    std::vector<HexCoord> path;
+    HexCoord currentPos = position;
+    HexCoord prevPos = position;
+
+    // 尝试找到一条有效的3步移动路径
+    for (int step = 0; step < 3; ++step) {
+        bool foundValidStep = false;
+
+        // 获取当前位置的邻居
+        auto neighbors = currentPos.neighbors();
+
+        for (const auto& neighbor : neighbors) {
+            // 不能原路返回
+            if (neighbor == prevPos) continue;
+
+            // 检查是否可以通过这个邻居移动
+            if (board.isPositionOccupied(neighbor)) {
+                // 找到一个可以移动的相邻位置
+                prevPos = currentPos;
+                currentPos = neighbor;
+                path.push_back(currentPos);
+                foundValidStep = true;
+                break;
+            }
+        }
+
+        // 如果无法找到有效的移动，返回false
+        if (!foundValidStep) return false;
+    }
+
+    // 最后一步必须是目标位置
+    return (currentPos == newPosition);
 }
-void Spider::move(Board &board, const HexCoord &newPosition, const PlayerID &) {
+void Spider::move(Board &board, const HexCoord &newPosition, const PlayerID &currentPlayer) {
+    // 1. 验证移动者身份
+    if (ID != currentPlayer) {
+        throw InvalidMoveException("Only the owner can move this piece");
+    }
 
+    // 2. 验证移动的合法性
+    if (!isValidMove(newPosition, board)) {
+        throw InvalidMoveException("Invalid spider move");
+    }
+
+    // 3. 尝试移动并检查蜂巢连续性
+    HexCoord oldPosition = getPosition();
+    auto piece = board.removePiece(oldPosition);
+
+    // 4. 临时移除后检查连续性
+    if (!board.isHiveContinuous()) {
+        board.addPiece(piece, oldPosition, ID);
+        throw HiveContinuityException("Spider move disrupts hive continuity");
+    }
+
+    // 5. 执行移动
+    setPosition(newPosition);
+    board.addPiece(piece, newPosition, ID);
+    recordMove(newPosition);
 }
 
 

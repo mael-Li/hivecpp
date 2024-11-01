@@ -35,7 +35,7 @@ int getMenuChoice() {
     }
     return 0;
 }
-Game::Game() : board(5) {
+Game::Game() : board(10) {
     // 初始化玩家
     players.push_back(std::make_shared<HumanPlayer>("Human 1",PlayerID::player1));
     players.push_back(std::make_shared<HumanPlayer>("Human 2",PlayerID::player2));

@@ -115,9 +115,7 @@ void Ant::move(Board &board, const HexCoord &newPosition, const PlayerID &curren
     // 4. 尝试移动并检查蜂巢连续性
     HexCoord oldPosition = getPosition();
     std::cout<<"Position input in fonction is["<<oldPosition.q<<","<<oldPosition.r<<"]"<<std::endl;
-    board.printPieceInfoAt(oldPosition);
     auto piece = board.removePiece(oldPosition);
-    board.printPieceInfoAt(oldPosition);
     // 临时移除后检查连续性
     if (!board.isHiveContinuous()) {
         board.addPiece(piece, oldPosition, ID);
@@ -126,9 +124,7 @@ void Ant::move(Board &board, const HexCoord &newPosition, const PlayerID &curren
 
     // 5. 执行移动
     setPosition(newPosition);
-    board.printPieceInfoAt(getPosition());
     board.addPiece(piece, newPosition, ID);
-    board.printPieceInfoAt(newPosition);
     recordMove(newPosition);
 }
 bool Spider::isValidMove(const HexCoord &newPosition, const Board &board) const {

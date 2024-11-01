@@ -21,65 +21,47 @@ void Board::initializePiecesAvailable() {
     piecesAvailable[PlayerID::player2][PieceName::Spider] = 2;
 }
 void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord, PlayerID player) {
-        // 1. 空指针检查
-        if (!piece) {
-            throw std::invalid_argument("Cannot add null piece");
-        }
-        // 2. 验证玩家ID
-        if (piece->getID() != player) {
-            throw std::invalid_argument("Piece does not belong to the current player");
-        }
-        // 3. 检查坐标是否有效
-        if (!isValidPosition(coord)) {
-            throw std::invalid_argument("Invalid coordinate position");
-        }
-        // 4. 第一个棋子的特殊处理
-        if (!firstPiecePlaced) {
-            if (grid.find(coord) == grid.end()) {
-                grid[coord] = Hexagon();
-            }
-            piece->setPosition(coord);
-            grid[coord].pieces.push_back(piece);
-            firstPiecePlaced = true;
-            if (piece->getEumName() == PieceName::Queen) {
-                setqueenBeePositions(coord, player);
-            }
-            piecesAvailable[player][piece->getEumName()]--;
-            return;
-        }
-        // 5. 检查是否是"眼"位置（只在非第一个棋子时检查）
-        if (isEye(coord)) {
-            // 如果是"眼"位置，只允许蚱蜢跳入
-            if (piece->getEumName() != PieceName::Grasshopper) {
-                throw InvalidMoveException("Only Grasshopper can jump into an eye");
-            }
-        }
-        // 6. 检查新位置的合法性
-        if (!canPlacePiece(coord, player)) {
-            throw InvalidMoveException("Invalid placement: piece must be adjacent to friendly pieces and not touching enemy pieces");
-        }
-        // 7. 处理棋子堆叠
-        if (grid.find(coord) == grid.end()) {
-            grid[coord] = Hexagon();
-        }
-        auto& hexagon = grid[coord];
-        if (!hexagon.pieces.empty()) {
-            if (piece->getEumName() != PieceName::Beetle) {
-                throw std::runtime_error("Only Beetle pieces can stack on other pieces");
-            }
-        }
-        // 8. 更新可用棋子数量
-        if (piecesAvailable[player][piece->getEumName()] <= 0) {
-            throw std::runtime_error("No more pieces of this type available");
-        }
-        piecesAvailable[player][piece->getEumName()]--;
-        // 9. 添加棋子到格子并更新位置
-        piece->setPosition(coord);
-        grid[coord].pieces.push_back(piece);
-        // 10. 更新蜂后位置（如果适用）
-        if (piece->getEumName() == PieceName::Queen) {
-            setqueenBeePositions(coord, player);
-        }
+    if (!piece) {
+        throw std::invalid_argument("Cannot add null piece");
+    }
+
+    if (piece->getID() != player) {
+        throw std::invalid_argument("Piece does not belong to the current player");
+    }
+
+    if (!isValidPosition(coord)) {
+        throw std::invalid_argument("Invalid coordinate position");
+    }
+
+    // 验证放置位置的合法性
+    if (!canPlacePiece(coord, player)) {
+        throw InvalidMoveException("Invalid placement position");
+    }
+
+    // 创建或获取格子
+    if (grid.find(coord) == grid.end()) {
+        grid[coord] = Hexagon();
+    }
+
+    // 更新棋子数量
+    if (piecesAvailable[player][piece->getEumName()] <= 0) {
+        throw std::runtime_error("No more pieces of this type available");
+    }
+    piecesAvailable[player][piece->getEumName()]--;
+
+    // 添加棋子到格子
+    piece->setPosition(coord);
+    grid[coord].pieces.push_back(piece);
+
+    // 更新首次放置状态
+    if (!firstPiecePlaced) {
+        firstPiecePlaced = true;
+    }
+
+    // 如果是蜂后，更新位置
+    if (piece->getEumName() == PieceName::Queen) {
+        setqueenBeePositions(coord, player);
+    }
 }
 std::shared_ptr<Piece> Board::removePiece(HexCoord coord) {
     // 1. 检查坐标是否存在于网格中
@@ -198,12 +180,30 @@ bool Board::isTopPiece(const HexCoord &coord, PlayerID id) const {
     }
     return false;
 }
-bool Board::canPlacePiece(const HexCoord &coord, PlayerID playerid) const {
+bool Board::canPlacePiece(const HexCoord& coord, PlayerID playerid) const {
     // 第一个棋子可以放在任何位置
     if (!firstPiecePlaced) {
         return true;
     }
-    // 检查是否与友方棋子相邻且不与敌方棋子接触
+
+    // 获取棋盘上的总棋子数
+    int totalPieces = 0;
+    for (const auto& [_, hex] : grid) {
+        totalPieces += hex.pieces.size();
+    }
+
+    // 如果是第二个棋子，只需要检查是否与第一个棋子相邻
+    if (totalPieces == 1) {
+        auto neighbors = coord.neighbors();
+        for (const auto& neighbor : neighbors) {
+            if (isPositionOccupied(neighbor)) {
+                return true;  // 只要相邻就可以
+            }
+        }
+        return false;  // 没有相邻的棋子
+    }
+
+    // 对于后续的棋子，检查是否与友方棋子相邻且不与敌方棋子接触
     bool hasAdjacentFriendly = false;
     auto neighbors = coord.neighbors();
 
@@ -216,14 +216,13 @@ bool Board::canPlacePiece(const HexCoord &coord, PlayerID playerid) const {
 
             if (topPiece->getID() == playerid) {
                 hasAdjacentFriendly = true;
-            } else {
-                // 如果接触到敌方棋子，返回false
-                return false;
+            } else if (totalPieces > 1) {  // 第二个棋子不检查敌方接触
+                return false;  // 接触到敌方棋子
             }
         }
     }
     return hasAdjacentFriendly;
-}11
+}
 bool Board::isHiveContinuous() const {
     // 如果棋盘为空或只有一个棋子，认为是连续的
     if (grid.empty()) return true;
@@ -349,39 +348,48 @@ std::vector<HexCoord> Board::getOccupiedNeighbors(const HexCoord &coord) const {
 
 
 void Board::printBoard() const {
-    index++;
-    int a = index;
-    std::cout << "Board[" << a << "]" << std::endl;
+    std::cout << "\nCurrent board state (Size: " << size << "x" << size << ")" << std::endl;
 
-    for (int row = size; row >= -size; --row) {
-        for (int col = -size; col < size; ++col) {
-            HexCoord coord(col, row);
-            if (isValidPosition(coord)) {
-                std::shared_ptr<Piece> piece = getTopPiece(coord);
-                if (piece) {
-                    // 打印当前六边形的所有棋子
-                    std::cout << "[";
-                    for (const auto& p : grid.at(coord).pieces) {
-                        std::string player = (p->getID() == PlayerID::player1) ? "1" : "2";
-                        std::cout << p->getName() << player << " ";
-                    }
-                    std::cout << "]";
-                } else {
-                    std::cout << "[   ]";
-                }
+    // 打印列坐标（顶部）
+    printColumnNumbers();
+
+    // 打印棋盘内容
+    for (int r = -size; r <= size; ++r) {
+        // 打印行号
+        std::cout << std::setw(3) << r << " ";
+
+        // 计算缩进
+        int indent = std::abs(r);
+        std::cout << std::string(indent * 2, ' ');
+
+        // 打印每一行的内容
+        for (int q = -size - std::min(0, r); q <= size - std::max(0, r); ++q) {
+            HexCoord coord(q, r);
+            if (isValidHexPosition(q, r)) {
+                printCell(coord);
+            } else {
+                std::cout << "   ";
             }
         }
-        std::cout << std::endl;
+
+        // 打印行尾的行号
+        std::cout << " " << std::setw(3) << r << std::endl;
     }
+
+    // 打印列坐标（底部）
+    printColumnNumbers();
+
+    // 打印图例
+    printLegend();
 }
-void Board::printPieceInfoAt(const HexCoord& coord) const {
-    auto it = grid.find(coord);
-    if (it != grid.end() && !it->second.pieces.empty()) {
-        // 如果找到了棋子，打印棋子的类型和坐标
-        const auto& piece = it->second.pieces.back(); // 假设我们打印最上面的棋子
-        std::cout << "Piece at (" << coord.q << ", " << coord.r << "): " << piece->getName() << std::endl;
-    } else {
-        // 如果没有找到棋子，打印空位置信息
-        std::cout << "No piece at (" << coord.q << ", " << coord.r << ")" << std::endl;
+
+// 添加调试方法
+void Board::debugPrintNeighbors(const HexCoord& coord) const {
+    std::cout << "Debugging position (" << coord.q << "," << coord.r << "):" << std::endl;
+    auto neighbors = coord.neighbors();
+    std::cout << "Neighbor positions and occupancy:" << std::endl;
+    for (const auto& neighbor : neighbors) {
+        std::cout << "(" << neighbor.q << "," << neighbor.r << "): "
+                  << (isPositionOccupied(neighbor) ? "Occupied" : "Empty") << std::endl;
     }
 }

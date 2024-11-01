@@ -23,6 +23,12 @@ namespace piecetype {
     class Piece;
     enum class PieceName { Queen, Ant, Spider, Beetle, Grasshopper };
     enum class PlayerID {player1,player2,playerai,playernobody};
+    enum class Victory {
+        NONE,
+        PLAYER1_WINS,
+        PLAYER2_WINS,
+        DRAW
+    };
 // 定义蜂巢坐标结构
 
 // 定义蜂巢格子类
@@ -76,22 +82,6 @@ public:
     }
     PlayerID getID()const{return ID;}
     void setID(const PlayerID& a){ID = a;}
-    //修改
-    /*
-    virtual bool canMove(const Board& board) const {
-        // 检查是否被完全包围
-        HexCoord pos = getPosition();
-        auto neighbors = pos.neighbors();
-        bool surrounded = true;
-        for (const auto& neighbor : neighbors) {
-            if (!board.isPositionOccupied(neighbor)) {
-                surrounded = false;
-                break;
-            }
-        }
-        return !surrounded;
-    }
-    */
     //修改
     void recordMove(const HexCoord& newPos) {
         moveHistory.push_back(newPos);
@@ -149,13 +139,31 @@ void dfsExplore(const HexCoord& current,
         std::shared_ptr<Piece> removePiece(HexCoord coord);
     //这里用于在添加棋子时，如果输入的是queen棋子可以直接保存其位置queenBeePositions;
         void setqueenBeePositions(const HexCoord& c,PlayerID a){queenBeePositions.emplace(a,c);}
-        //获得这个棋子，并且是智能指针类型
+    //限制在4个回合之内必须下蜂后
+    bool isQueenPlaced(PlayerID playerId) const {
+            return queenBeePositions.find(playerId) != queenBeePositions.end();
+        }
+    int getTurnCount() const { return turnCount; }
+    void incrementTurn() { turnCount++; }
+private:
+    // 检查是否需要强制放置蜂后
+    bool requiresQueenPlacement(PlayerID playerId) const {
+        int playerIndex = (playerId == PlayerID::player1) ? 0 : 1;
+        return queenPlacementRequired[playerIndex];
+    }
+    void updateQueenPlacement() {
+        if (turnCount >= 6) {  // 第4回合结束后
+            queenPlacementRequired[0] = !isQueenPlaced(PlayerID::player1);
+            queenPlacementRequired[1] = !isQueenPlaced(PlayerID::player2);
+        }
+    }
+    friend class Game;
+public:
         void printBoard() const;
     //检查位置合法性
         bool isValidPosition(HexCoord coord) const;
         bool isPositionOccupied(HexCoord coord) const;
         bool ishasNeighber(HexCoord coord)const;
-        bool isQueenBeeSurround(PlayerID)const;
         bool isTopPiece(const HexCoord& coord, PlayerID id)const;
         bool canPlacePiece(const HexCoord& coord,PlayerID playerid)const;
     //！！对于棋盘的连续性检测
@@ -165,10 +173,18 @@ void dfsExplore(const HexCoord& current,
         bool willMoveMaintainContinuity(const HexCoord& from, const HexCoord& to) const;
     //检查是不是眼
         bool isEye(const HexCoord& coord)const;
+    //辅助胜利检测的函数
+        bool isCompletelyBlocked(const HexCoord& position) const;
+        bool hasValidMoves(PlayerID playerId) const;
+        bool canQueenMove(PlayerID playerId) const;
+    //胜利检测
+        bool isQueenBeeSurround(PlayerID playerId) const;
+        Victory checkVictory() const;
+    std::vector<HexCoord> getPossibleMoves(const HexCoord& pos) const;
     //打印蜂后邻居的控制位置，用于调试代码
         void afficheneighber(const PlayerID&)const;
         void debugPrintNeighbors(const HexCoord& coord) const;
-        PlayerID checkVictory()const;
+
     //获得目前棋盘上的所有棋子
         std::vector<std::shared_ptr<Piece>>getAllPiecesOnBoard(int size)const;
     //获得目标位置的棋子
@@ -203,6 +219,9 @@ void dfsExplore(const HexCoord& current,
     }
 
     private:
+    // 新增用于胜利检查的辅助方法
+    bool isPositionBlockedByPiece(const HexCoord& pos) const;
+    bool areAllPiecesBlocked(PlayerID playerId) const;
     void clearQueenBeePosition(PlayerID playerId) {
         queenBeePositions.erase(playerId);
     }
@@ -213,16 +232,24 @@ void dfsExplore(const HexCoord& current,
                std::abs(s) <= size;
     }
     void printCell(const HexCoord& coord) const {
-        auto piece = getTopPiece(coord);
-        if (piece) {
-            // 打印棋子信息
-            std::string pieceStr = piece->getName();
-            PlayerID playerId = piece->getID();
-            std::cout << "[" << pieceStr
-                     << (playerId == PlayerID::player1 ? "1" : "2")
-                     << "]";
+        auto it = grid.find(coord);
+        if (it != grid.end() && !it->second.pieces.empty()) {
+            auto& pieces = it->second.pieces;
+            auto topPiece = pieces.back();
+            std::string pieceStr = topPiece->getName();
+            PlayerID playerId = topPiece->getID();
+
+            // 如果有多个棋子堆叠，显示堆叠数量
+            if (pieces.size() > 1) {
+                std::cout << "[" << pieceStr
+                         << (playerId == PlayerID::player1 ? "1" : "2")
+                         << "*" << pieces.size() << "]";
+            } else {
+                std::cout << "[" << pieceStr
+                         << (playerId == PlayerID::player1 ? "1" : "2")
+                         << "]";
+            }
         } else {
-            // 打印空格子
             std::cout << "[  ]";
         }
     }
@@ -271,6 +298,22 @@ void dfsExplore(const HexCoord& current,
         std::cout << "Board size: " << size << std::endl;
         std::cout << "Total pieces: " << grid.size() << std::endl;
         // 添加其他可能需要的调试信息
+    }
+//实现堆叠
+    bool canStackAt(const HexCoord& coord, const std::shared_ptr<Piece>& piece) const {
+        // 只有甲虫可以堆叠
+        if (piece->getEumName()!= PieceName::Beetle) {
+            return false;
+        }
+        return true;
+    }
+    // 获取位置上的堆叠高度
+    int getStackHeight(const HexCoord& coord) const {
+        auto it = grid.find(coord);
+        if (it == grid.end()) {
+            return 0;
+        }
+        return it->second.pieces.size();
     }
 };
 

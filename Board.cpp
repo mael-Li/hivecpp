@@ -33,6 +33,10 @@ void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord, PlayerID play
         throw std::invalid_argument("Invalid coordinate position");
     }
 
+    if (isPositionOccupied(coord) && !canStackAt(coord, piece)) {
+        throw InvalidMoveException("Only beetles can stack on other pieces");
+    }
+
     // 验证放置位置的合法性
     if (!canPlacePiece(coord, player)) {
         throw InvalidMoveException("Invalid placement position");
@@ -143,7 +147,10 @@ bool Board::isValidMove(const HexCoord &from, const HexCoord &to) const {
 
 bool Board::isPositionOccupied(HexCoord coord) const {
     auto it = grid.find(coord);
-    return !(it != grid.end() && !it->second.pieces.empty());
+    if (it == grid.end()) {
+        return false;
+    }
+    return !it->second.pieces.empty();
 }
 bool Board::ishasNeighber(HexCoord coord) const {
     std::vector<HexCoord> neighbors = coord.neighbors();
@@ -154,24 +161,132 @@ bool Board::ishasNeighber(HexCoord coord) const {
     }
     return false;
 }
-bool Board::isQueenBeeSurround(PlayerID player) const {
-    // 尝试获取指定玩家的蜂后位置
-    auto it = queenBeePositions.find(player);
-    if (it == queenBeePositions.end()) {
-        // 如果键不存在，则蜂后位置未知，可以认为蜂后没有被包围
-        return false;
+bool Board::isQueenBeeSurround(PlayerID playerId) const {
+    // 首先检查是否已放置蜂后
+    auto queenIt = queenBeePositions.find(playerId);
+    if (queenIt == queenBeePositions.end()) {
+        return false;  // 蜂后未放置，不能判定为被包围
     }
-    const HexCoord& queenBeePos = it->second;
-    std::vector<HexCoord> neighbors = queenBeePos.neighbors();
-    // 检查蜂后周围的六个位置是否全部被占据
+
+    const HexCoord& queenPos = queenIt->second;
+    std::vector<HexCoord> neighbors = queenPos.neighbors();
+
+    // 检查每个相邻位置
+    int blockedCount = 0;
     for (const auto& neighbor : neighbors) {
-        if (!isPositionOccupied(neighbor)) {
-            //std::cout<<"The position["<<neighbor.q<<","<<neighbor.r<<"]"<<"is vide"<<std::endl;
-            return false; // 至少有一个空位，蜂后可以移动
+        if (!isValidPosition(neighbor) || isPositionBlockedByPiece(neighbor)) {
+            blockedCount++;
         }
     }
-    return true; // 所有位置都被占据，蜂后无法移动
+
+    // 只有当所有6个相邻位置都被占据时，才算被围死
+    return blockedCount == 6;
 }
+bool Board::isPositionBlockedByPiece(const HexCoord& pos) const {
+    auto it = grid.find(pos);
+    return it != grid.end() && !it->second.pieces.empty();
+}
+bool Board::isCompletelyBlocked(const HexCoord& position) const {
+    auto neighbors = position.neighbors();
+    for (const auto& neighbor : neighbors) {
+        if (isValidPosition(neighbor) && !isPositionBlockedByPiece(neighbor)) {
+            return false;
+        }
+    }
+    return true;
+}
+bool Board::hasValidMoves(PlayerID playerId) const {
+    // 如果还有可放置的棋子，就一定有有效移动
+    for (const auto& [pieceName, count] : piecesAvailable.at(playerId)) {
+        if (count > 0) {
+            return true;
+        }
+    }
+
+    // 检查已放置棋子的移动
+    for (const auto& [coord, hex] : grid) {
+        for (const auto& piece : hex.pieces) {
+            if (piece && piece->getID() == playerId) {
+                // 检查每个棋子是否有可能的移动
+                if (!getPossibleMoves(coord).empty()) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+std::vector<HexCoord> Board::getPossibleMoves(const HexCoord& pos) const {
+    std::vector<HexCoord> validMoves;
+    auto piece = getPieceAt(pos);
+    if (!piece) return validMoves;
+
+    // 遍历整个棋盘的所有可能位置
+    for (int q = -size; q <= size; q++) {
+        for (int r = -size; r <= size; r++) {
+            HexCoord target(q, r);
+            if (isValidPosition(target) && piece->isValidMove(target, *this)) {
+                validMoves.push_back(target);
+            }
+        }
+    }
+
+    return validMoves;
+}
+bool Board::canQueenMove(PlayerID playerId) const {
+    auto queenIt = queenBeePositions.find(playerId);
+    if (queenIt == queenBeePositions.end()) {
+        return false;  // 蜂后未放置
+    }
+    return !getPossibleMoves(queenIt->second).empty();
+}
+Victory Board::checkVictory() const {
+    // 游戏刚开始时不应该判定胜负
+    if (getTotalPieces() < 2) {
+        return Victory::NONE;
+    }
+
+    bool player1QueenSurrounded = false;
+    bool player2QueenSurrounded = false;
+
+    // 只有在蜂后被放置后才检查是否被围死
+    auto queen1It = queenBeePositions.find(PlayerID::player1);
+    auto queen2It = queenBeePositions.find(PlayerID::player2);
+
+    if (queen1It != queenBeePositions.end()) {
+        player1QueenSurrounded = isQueenBeeSurround(PlayerID::player1);
+    }
+
+    if (queen2It != queenBeePositions.end()) {
+        player2QueenSurrounded = isQueenBeeSurround(PlayerID::player2);
+    }
+
+    // 检查特殊情况：双方同时被围死
+    if (player1QueenSurrounded && player2QueenSurrounded) {
+        return Victory::DRAW;
+    }
+
+    // 单方被围死情况
+    if (player1QueenSurrounded) {
+        return Victory::PLAYER2_WINS;
+    }
+    if (player2QueenSurrounded) {
+        return Victory::PLAYER1_WINS;
+    }
+
+    // 检查僵局情况
+    // 只有在双方都没有可用移动时才算僵局
+    bool player1Blocked = !hasValidMoves(PlayerID::player1);
+    bool player2Blocked = !hasValidMoves(PlayerID::player2);
+
+    if (player1Blocked && player2Blocked && queen1It != queenBeePositions.end()
+        && queen2It != queenBeePositions.end()) {
+        return Victory::DRAW;
+        }
+
+    return Victory::NONE;
+}
+
 //显示所下的棋子的空位
 bool Board::isTopPiece(const HexCoord &coord, PlayerID id) const {
     auto hex = grid.find(coord);
@@ -306,15 +421,6 @@ void Board::afficheneighber(const PlayerID&player) const {
             std::cout<<"The position["<<neighbor.q<<","<<neighbor.r<<"]"<<"is vide"<<std::endl;
         }
     }
-}
-PlayerID Board::checkVictory() const {
-    if (isQueenBeeSurround(PlayerID::player1)) {
-        return PlayerID::player1;
-    }
-    if (isQueenBeeSurround(PlayerID::player2)) {
-        return PlayerID::player2;
-    }
-    return PlayerID::playernobody; // 无胜利者，可以返回任意玩家
 }
 
 std::vector<std::shared_ptr<Piece>> Board::getAllPiecesOnBoard(int size)const {

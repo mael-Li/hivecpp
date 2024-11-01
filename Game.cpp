@@ -2,196 +2,450 @@
 // Created by 李世佳 on 24-10-17.
 //
 #include "Game.h"
-using namespace piecetype;
-int getMenuChoice() {
-    std::vector<std::string> options = {"Place Piece", "Move Piece", "Exit"};
-    int choice = -1;
+#include <iostream>
+#include <limits>
+#include <algorithm>
+#include <thread>
+#include <chrono>
 
-    while (choice != 2) { // 2对应"Move Piece"
-        std::cout << "\nHive Game Menu:\n";
-        for (size_t i = 0; i < options.size(); ++i) {
-            std::cout << i + 1 << ". " << options[i] << "\n";
-        }
-        std::cout << "Choose an option: ";
-        if (!(std::cin >> choice) || choice < 1 || choice > static_cast<int>(options.size())) {
-            std::cout << "Invalid input, please try again.\n";
-            std::cin.clear(); // Reset failbit
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ignore rest of line
-            continue;
-        }
-        switch (choice) {
-            case 1: // Place Piece
-                std::cout << "Placing a piece...\n";
-            return 1;
-            case 2: // Move Piece
-                std::cout << "Moving a piece...\n";
-            return 2;
-            case 3: // Exit
-                std::cout << "Exiting the game...\n";
-            return 0;
-            default:
-                std::cout << "Unsupported option.\n";
-        }
-    }
-    return 0;
-}
-Game::Game() : board(10) {
-    // 初始化玩家
-    players.push_back(std::make_shared<HumanPlayer>("Human 1",PlayerID::player1));
-    players.push_back(std::make_shared<HumanPlayer>("Human 2",PlayerID::player2));
-}
-void Game::start() {
-    bool gameIsOver = false;
-    std::string winner;
-    int currentPlayerIndex = 0; // 当前玩家索引
-    while (!gameIsOver) {
-        auto currentPlayer = players[currentPlayerIndex];
-        //检测胜利与否
-        if (board.isQueenBeeSurround(currentPlayer->getid())) {
-            gameIsOver = true;
-            winner = getOpponentName(currentPlayer->getid());
-            std::cout << "Player " << currentPlayer->getName()
-                      << " has been surrounded! The winner is " << winner << "!" << std::endl;
+namespace piecetype {
+    const std::map<GameCommand, std::string> Game::COMMAND_DESCRIPTIONS = {
+        {GameCommand::PLACE_PIECE, "Place a new piece"},
+        {GameCommand::MOVE_PIECE, "Move an existing piece"},
+        {GameCommand::SHOW_HELP, "Show game help"},
+        {GameCommand::SHOW_BOARD, "Show current board state"},
+        {GameCommand::SHOW_STATS, "Show game statistics"},
+        {GameCommand::QUIT, "Exit game"}
+    };
+
+    HumanPlayer::HumanPlayer(const std::string& name, const PlayerID& id)
+        : Player(name, id) {}
+
+    void HumanPlayer::makeMove(Board& board, GameCommand command) {
+        switch (command) {
+            case GameCommand::PLACE_PIECE:
+                handlePlacePiece(board);
             break;
+            case GameCommand::MOVE_PIECE:
+                handleMovePiece(board);
+            break;
+            default:
+                throw std::runtime_error("Invalid command for player action");
         }
-        //显示哪个玩家的回合
-        std::cout << "It's " << currentPlayer->getName() << "'s turn." << std::endl;
-        // 显示菜单并获取用户的选择
-        int commandOrder = getMenuChoice();
-        // 在makeMove函数内处理异常输入
-        try {
-            currentPlayer->makeMove(board, commandOrder);
-        } catch (const std::exception& e) {
-            std::cout << "An error occurred: " << e.what()
-                      << " Please try your action again." << std::endl;
-            continue; // 继续当前玩家的回合
-        }
-        std::cout << "Current board state:" << std::endl;
-        board.printBoard();
-        // 切换到下一个玩家
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
-        index++;
+        incrementMoveCount();
     }
-}
 
-HumanPlayer::HumanPlayer(std::string n,const PlayerID&a):Player(std::move(n),a){}
+    void HumanPlayer::handlePlacePiece(Board& board) {
+        bool queenRequired = (board.getTurnCount() >= 6 && !board.isQueenPlaced(getID()));
 
-void HumanPlayer::makeMove(Board& board, const int c) {
-    oneaction();
-    bool command_move = false;
-    std::string command;
-    std::string player;
-    std::string pieceType;
-    if(getid() == PlayerID::player1) player = "Player 1";
-    else player = "Player 2";
-    //将命令导入函数
-    if(c == 1) command = "place";
-    else if(c == 2) command = "move";
-    //判断
-    if (command == "place") {
-        std::cout << player << ", please enter your type of :";
-        std::cin >> pieceType;
-        int x, y;
-        std::cout<<"please enter your position of piece:";
-        std::cin>>x>>y;
-        std::cout<<std::endl;
-        // 创建棋子实例
-        std::shared_ptr<Piece> piece;
-        if (pieceType == "Q") {
-            HexCoord pos(x,y);
-            piece = std::make_shared<QueenBee>(getid());
-        } else if (pieceType == "A") {
-            piece = std::make_shared<Ant>(getid());
+        if (queenRequired) {
+            std::cout << "\nYou must place your Queen Bee this turn!\n";
+            placePiece(board, "Q");
+            return;
         }
-        else if(pieceType == "S"){
-            piece = std::make_shared<Spider>(getid());
-        }else if(pieceType == "B"){
-            piece = std::make_shared<Beetle>(getid());
-        }else if(pieceType == "G"){
-            piece = std::make_shared<Grasshopper>(getid());
-        }
-        else{
-            throw Pieceexception("Unknown piece type.");
-        }
-        // 放置棋子
-        board.addPiece(piece, HexCoord(x, y),getid());
-    } else if (command == "move") {
-        int fromX, fromY, toX, toY;
-        while (!command_move) {
-            std::cout << "Please enter the position you want to move (x y): ";
-            std::cin >> fromX >> fromY;
-            if (std::cin.fail()) {
-                std::cin.clear(); // 清除错误标志
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 忽略错误输入直到下一个换行符
-                std::cerr << "Invalid input. Please enter integers only." << std::endl;
-                continue; // 重新开始循环
+
+        // 显示可用棋子
+        std::cout << "\nAvailable pieces to place:\n";
+        for (const auto& [symbol, type] : PIECE_TYPES) {
+            int remaining = board.piecesAvailable[getID()][type];
+            if (remaining > 0) {
+                std::cout << symbol << " (" << remaining << " remaining)\n";
             }
-
-            auto piece = board.getPieceAt(HexCoord(fromX, fromY));
-            if (!piece) {
-                throw Pieceexception("No piece at the given coordinate.");
-            }
-            command_move = true; // 找到棋子，标记输入为有效，并退出循环
         }
+
+        // 获取玩家选择的棋子类型
+        std::string pieceType;
+        bool validPieceType = false;
+        do {
+            std::cout << "\nEnter piece type (Q/A/S/B/G): ";
+            std::cin >> pieceType;
+            std::transform(pieceType.begin(), pieceType.end(), pieceType.begin(), ::toupper);
+
+            if (PIECE_TYPES.find(pieceType) != PIECE_TYPES.end()) {
+                if (board.piecesAvailable[getID()][PIECE_TYPES.at(pieceType)] > 0) {
+                    validPieceType = true;
+                } else {
+                    std::cout << "No more " << pieceType << " pieces available.\n";
+                }
+            } else {
+                std::cout << "Invalid piece type. Please try again.\n";
+            }
+        } while (!validPieceType);
+
+        // 放置选择的棋子
+        placePiece(board, pieceType);
+    }
+
+    void HumanPlayer::placePiece(Board& board, const std::string& pieceType) {
+        int maxAttempts = 3; // 最大尝试次数
+        int attempts = 0;
+
+        while (attempts < maxAttempts) {
+            try {
+                int x, y;
+                std::cout << "Enter coordinates (x y) to place " << pieceType << ": ";
+                if (!(std::cin >> x >> y)) {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    throw InvalidMoveException("Invalid input format. Please enter two numbers.");
+                }
+
+                if (!validateCoordinates(x, y, board)) {
+                    throw InvalidMoveException("Coordinates out of board bounds.");
+                }
+
+                auto piece = createPiece(pieceType);
+                if (!piece) {
+                    throw InvalidMoveException("Failed to create piece.");
+                }
+
+                board.addPiece(piece, HexCoord(x, y), getID());
+                std::cout << "Successfully placed " << pieceType << " at (" << x << "," << y << ")\n";
+                return;
+
+            } catch (const InvalidMoveException& e) {
+                attempts++;
+                std::cout << "Error: " << e.what() << "\n";
+                if (attempts < maxAttempts) {
+                    std::cout << "Please try again (" << (maxAttempts - attempts)
+                             << " attempts remaining).\n";
+                }
+            } catch (const std::exception& e) {
+                attempts++;
+                std::cout << "Unexpected error: " << e.what() << "\n";
+                if (attempts < maxAttempts) {
+                    std::cout << "Please try again (" << (maxAttempts - attempts)
+                             << " attempts remaining).\n";
+                }
+            }
+        }
+
+        throw InvalidMoveException("Maximum placement attempts reached. Turn skipped.");
+    }
+
+
+    void HumanPlayer::handleMovePiece(Board& board) {
+        if (!board.isQueenPlaced(getID())) {
+            throw InvalidMoveException("You must place your Queen Bee before moving any pieces!");
+        }
+
+        int fromX, fromY;
+        std::cout << "Enter the coordinates of the piece to move (x y): ";
+        if (!(std::cin >> fromX >> fromY)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            throw InvalidMoveException("Invalid input format for source coordinates.");
+        }
+
+        if (!validateCoordinates(fromX, fromY, board)) {
+            throw InvalidMoveException("Source coordinates out of bounds.");
+        }
+
         auto piece = board.getPieceAt(HexCoord(fromX, fromY));
-        std::cout << "Please enter the new position you want to move to (x y): ";
-        if (std::cin >> toX >> toY && std::cin.good()) { // 检查输入的有效性
-            piece->move(board, HexCoord(toX, toY), getid());
-        } else {
-            std::cin.clear(); // 清除错误标志
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 忽略错误输入直到下一个换行符
-            std::cerr << "Invalid input. Please enter integers only." << std::endl;
-            // 可能需要重新提示用户输入或者做其他处理
+        if (!piece || piece->getID() != getID()) {
+            throw InvalidMoveException("No valid piece at the selected position.");
+        }
+
+        int toX, toY;
+        std::cout << "Enter the target coordinates (x y): ";
+        if (!(std::cin >> toX >> toY)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            throw InvalidMoveException("Invalid input format for target coordinates.");
+        }
+
+        if (!validateCoordinates(toX, toY, board)) {
+            throw InvalidMoveException("Target coordinates out of bounds.");
+        }
+
+        piece->move(board, HexCoord(toX, toY), getID());
+        std::cout << "Piece moved successfully from (" << fromX << "," << fromY
+                  << ") to (" << toX << "," << toY << ")\n";
+    }
+
+    std::shared_ptr<Piece> HumanPlayer::createPiece(const std::string& pieceType) {
+        if (PIECE_TYPES.find(pieceType) == PIECE_TYPES.end()) {
+            return nullptr;
+        }
+
+        switch (PIECE_TYPES.at(pieceType)) {
+            case PieceName::Queen: return std::make_shared<QueenBee>(id);
+            case PieceName::Ant: return std::make_shared<Ant>(id);
+            case PieceName::Spider: return std::make_shared<Spider>(id);
+            case PieceName::Beetle: return std::make_shared<Beetle>(id);
+            case PieceName::Grasshopper: return std::make_shared<Grasshopper>(id);
+            default: return nullptr;
         }
     }
-    else {
-        std::cout << "Invalid command." << std::endl;
+
+    bool HumanPlayer::validateCoordinates(int x, int y, const Board& board) const {
+        if (!board.isValidPosition(HexCoord(x, y))) {
+            std::cout << "Invalid coordinates. Please try again.\n";
+            return false;
+        }
+        return true;
+    }
+
+    Game::Game() : board(BOARD_SIZE), gameState(GameState::MENU) {
+        initializeGame();
+    }
+
+    void Game::initializeGame() {
+        // 创建玩家
+        players.clear();
+        players.push_back(std::make_shared<HumanPlayer>("Player 1", PlayerID::player1));
+        players.push_back(std::make_shared<HumanPlayer>("Player 2", PlayerID::player2));
+
+        // 初始化当前玩家
+        currentPlayer = players[0];
+
+        // 初始化玩家状态
+        playerStates.clear();
+        playerStates[PlayerID::player1] = PlayerState();
+        playerStates[PlayerID::player2] = PlayerState();
+
+        // 初始化游戏统计
+        stats = GameStats();
+        stats.movesMade[PlayerID::player1] = 0;
+        stats.movesMade[PlayerID::player2] = 0;
+        stats.queenPlaced[PlayerID::player1] = false;
+        stats.queenPlaced[PlayerID::player2] = false;
+
+        gameState = GameState::PLAYING;
+    }
+
+    void Game::start() {
+        clearScreen();
+        std::cout << "\n=== Welcome to Hive Game ===\n\n";
+        displayHelp();
+        gameLoop();
+    }
+
+    void Game::gameLoop() {
+        while (gameState != GameState::GAME_OVER) {
+            displayGameStatus();
+            displayMenu();
+
+            GameCommand command = getCommand();
+            if (command == GameCommand::QUIT) {
+                break;
+            }
+
+            try {
+                handleGameCommand(command);
+                updateGameState();
+
+                if (command == GameCommand::PLACE_PIECE || command == GameCommand::MOVE_PIECE) {
+                    switchPlayer();
+                }
+            }
+            catch (const std::exception& e) {
+                std::cout << "\nError: " << e.what() << "\n";
+                std::cout << "Press Enter to continue...";
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+        }
+
+        if (isGameOver()) {
+            std::cout << "\nGame Over! " << getWinner() << " wins!\n";
+        }
+    }
+
+    GameCommand Game::getCommand() const {
+        int choice;
+        std::cout << "\nEnter your choice (1-" << COMMAND_DESCRIPTIONS.size() << "): ";
+
+        if (!(std::cin >> choice)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            return GameCommand::INVALID;
+        }
+
+        if (choice < 1 || choice > static_cast<int>(COMMAND_DESCRIPTIONS.size())) {
+            return GameCommand::INVALID;
+        }
+
+        return static_cast<GameCommand>(choice - 1);
+    }
+
+    void Game::displayMenu() const {
+        std::cout << "\nAvailable Commands:\n";
+        int i = 1;
+        for (const auto& [command, description] : COMMAND_DESCRIPTIONS) {
+            std::cout << i++ << ". " << description << "\n";
+        }
+    }
+
+    void Game::displayGameStatus() const {
+        std::cout << "\n=== Current Game Status ===\n";
+        std::cout << "Current Player: " << currentPlayer->getName() << "\n";
+
+        // 安全地访问玩家状态
+        auto stateIt = playerStates.find(currentPlayer->getID());
+        if (stateIt != playerStates.end()) {
+            const auto& state = stateIt->second;
+            std::cout << "Turn: " << state.turnCount + 1 << "\n";
+
+            if (state.mustPlaceQueen) {
+                std::cout << "*** Queen Bee must be placed this turn! ***\n";
+            }
+
+            if (!board.isQueenPlaced(currentPlayer->getID())) {
+                int turnsRemaining = 3 - std::min(state.turnCount, 3);
+                if (turnsRemaining > 0) {
+                    std::cout << "Queen Bee not yet placed ("
+                              << turnsRemaining
+                              << " turns remaining)\n";
+                }
+            }
+        }
+
+        board.printBoard();
+    }
+
+    void Game::displayHelp() const {
+        std::cout << "\n=== Game Rules ===\n"
+                  << "1. Players take turns placing or moving pieces\n"
+                  << "2. The Queen Bee must be placed by turn 4\n"
+                  << "3. To win, surround the opponent's Queen Bee\n"
+                  << "4. Each piece type has unique movement rules\n\n";
+    }
+
+    void Game::displayStats() const {
+        std::cout << "\n=== Game Statistics ===\n"
+                  << "Total Turns: " << stats.turnCount << "\n"
+                  << "Pieces Placed: " << stats.piecesPlaced << "\n"
+                  << "Player 1 Moves: " << stats.movesMade.at(PlayerID::player1) << "\n"
+                  << "Player 2 Moves: " << stats.movesMade.at(PlayerID::player2) << "\n";
+    }
+
+    void Game::handleGameCommand(GameCommand command) {
+        // 安全地获取当前玩家状态
+        auto stateIt = playerStates.find(currentPlayer->getID());
+        if (stateIt == playerStates.end()) {
+            throw std::runtime_error("Player state not initialized properly");
+        }
+
+        auto& currentPlayerState = stateIt->second;
+
+        try {
+            // 检查是否必须放置蜂后
+            if (currentPlayerState.turnCount >= 3 && !board.isQueenPlaced(currentPlayer->getID())) {
+                currentPlayerState.mustPlaceQueen = true;
+            }
+
+            switch (command) {
+                case GameCommand::PLACE_PIECE: {
+                    currentPlayer->makeMove(board, command);
+                    currentPlayerState.turnCount++;
+                    stats.movesMade[currentPlayer->getID()]++;
+                    break;
+                }
+                case GameCommand::MOVE_PIECE: {
+                    if (currentPlayerState.mustPlaceQueen) {
+                        throw InvalidMoveException("You must place your Queen Bee before moving pieces!");
+                    }
+                    currentPlayer->makeMove(board, command);
+                    currentPlayerState.turnCount++;
+                    stats.movesMade[currentPlayer->getID()]++;
+                    break;
+                }
+                case GameCommand::SHOW_HELP:
+                    displayHelp();
+                break;
+                case GameCommand::SHOW_BOARD:
+                    board.printBoard();
+                break;
+                case GameCommand::SHOW_STATS:
+                    displayStats();
+                break;
+                default:
+                    break;
+            }
+        } catch (const std::exception& e) {
+            std::cout << "Error: " << e.what() << "\n";
+        }
+    }
+
+    void Game::forcePlaceQueen() {
+        std::cout << "\nYou must place your Queen Bee. Enter coordinates (x y): ";
+        int x, y;
+        while (true) {
+            if (!(std::cin >> x >> y)) {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Invalid input. Please enter two numbers: ";
+                continue;
+            }
+
+            try {
+                auto queen = std::make_shared<QueenBee>(currentPlayer->getID());
+                board.addPiece(queen, HexCoord(x, y), currentPlayer->getID());
+                std::cout << "Queen Bee placed at (" << x << "," << y << ")\n";
+                break;
+            } catch (const std::exception& e) {
+                std::cout << "Invalid placement: " << e.what() << "\nTry again: ";
+            }
+        }
+    }
+
+    void Game::switchPlayer() {
+        // 切换当前玩家
+        currentPlayer = (currentPlayer == players[0]) ? players[1] : players[0];
+
+        // 安全检查新的当前玩家状态是否存在
+        if (playerStates.find(currentPlayer->getID()) == playerStates.end()) {
+            playerStates[currentPlayer->getID()] = PlayerState();
+        }
+
+        stats.turnCount++;
+    }
+    void Game::updateGameState() {
+        Victory victory = board.checkVictory();
+
+        // 只在真正达到终局时才结束游戏
+        if (victory != Victory::NONE) {
+            gameState = GameState::GAME_OVER;
+            std::cout << "\nGame Over! ";
+            switch (victory) {
+                case Victory::PLAYER1_WINS:
+                    std::cout << players[0]->getName() << " wins!\n";
+                break;
+                case Victory::PLAYER2_WINS:
+                    std::cout << players[1]->getName() << " wins!\n";
+                break;
+                case Victory::DRAW:
+                    std::cout << "Game ended in a draw!\n";
+                break;
+                default:
+                    break;
+            }
+        }
+    }
+    bool Game::isGameOver() const {
+        return gameState == GameState::GAME_OVER;
+    }
+
+
+    std::string Game::getWinner() const {
+        Victory victory = board.checkVictory();
+        switch (victory) {
+            case Victory::PLAYER1_WINS:
+                return players[0]->getName();
+            case Victory::PLAYER2_WINS:
+                return players[1]->getName();
+            case Victory::DRAW:
+                return "Draw - Game ended in a stalemate";
+            default:
+                return "Game in progress";
+        }
+    }
+    void Game::clearScreen() const {
+#ifdef _WIN32
+        system("cls");
+#else
+        system("clear");
+#endif
     }
 }
 
-AIPlayer::AIPlayer(std::string n,const PlayerID&):Player(std::move(n),PlayerID::playerai){}
-
-void AIPlayer::makeMove(piecetype::Board& board,int) {
-    // AI 的逻辑来决定移动
-    /*
-    index_ai++;
-    int command = index_ai;
-    std::cout << getName() << " is making a move..." << std::endl;
-    // 示例移动逻辑
-    switch(command) {
-        case 0:
-            auto queen = std::make_shared<QueenBee>(PlayerID::playerai);
-            int x,y;
-            std::mt19937 generator(std::random_device{}());
-            std::uniform_int_distribution<> distribution(-board.getSize(), board.getSize());
-            x = distribution(generator);
-            y = distribution(generator);
-            board.addPiece(queen,HexCoord(x,y), PlayerID::playerai);
-        case 1:
-            auto ant = std::make_shared<Ant>(PlayerID::playerai);
-            std::mt19937 generator1(std::random_device{}());
-            std::uniform_int_distribution<> distribution1(-board.getSize(), board.getSize());
-            x = distribution1(generator);
-            y = distribution1(generator);
-            board.addPiece(queen,HexCoord(x,y), PlayerID::playerai);
-            index_ai =0;
-        default:
-            std::cout << "Unknown command." << std::endl;
-        break;
-    }
-
-    auto queen = std::make_shared<QueenBee>(PlayerID::playerai);
-    int x,y;
-    std::mt19937 generator(std::random_device{}());
-    std::uniform_int_distribution<> distribution(-board.getSize(), board.getSize());
-    x = distribution(generator);
-    y = distribution(generator);
-    board.addPiece(queen,HexCoord(x,y), PlayerID::playerai);
-    */
-    auto pieces = board.getAllPiecesOnBoard(board.getSize());
-    if (!pieces.empty()) {
-        auto piece = pieces.front();
-        piece->move(board, HexCoord(1, 1),PlayerID::playerai); // 示例移动
-    }
-
-}

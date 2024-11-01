@@ -32,7 +32,9 @@ bool QueenBee::isValidMove(const HexCoord &newPosition, const Board &board) cons
     // 1. 基本验证
     if (!board.isValidPosition(newPosition)) return false;
     if (position == newPosition) return false;
-
+    if (board.isPositionOccupied(newPosition)) {
+        return false;
+    }
     // 2. 检查移动距离是否为1
     if (position.distance(newPosition) != 1) return false;
 
@@ -122,6 +124,7 @@ void Ant::move(Board &board, const HexCoord &newPosition, const PlayerID &curren
         throw HiveContinuityException("Ant is't contiuity");
     }
 
+
     // 5. 执行移动
     setPosition(newPosition);
     board.addPiece(piece, newPosition, ID);
@@ -130,6 +133,9 @@ void Ant::move(Board &board, const HexCoord &newPosition, const PlayerID &curren
 bool Spider::isValidMove(const HexCoord &newPosition, const Board &board) const {
     // 1. 基本验证
     if (!board.isValidPosition(newPosition)) return false;
+    if (board.isPositionOccupied(newPosition)) {
+        return false;
+    }
     if (position == newPosition) return false;
     // 检查是否是"眼"位置
     if (board.isEye(newPosition)) {
@@ -199,7 +205,9 @@ bool Grasshopper::isValidMove(const HexCoord& newPosition, const Board& board) c
     // 1. 基本验证
     if (!board.isValidPosition(newPosition)) return false;
     if (position == newPosition) return false;
-
+    if (board.isPositionOccupied(newPosition)) {
+        return false;
+    }
     // 2. 检查跳跃方向是否在同一直线上
     if (position.q != newPosition.q &&
         position.r != newPosition.r &&
@@ -260,6 +268,7 @@ void Grasshopper::move(Board &board, const HexCoord &newPosition, const PlayerID
     board.addPiece(piece, newPosition, ID);
     recordMove(newPosition);
 }
+// 修改 Beetle 类的移动验证
 bool Beetle::isValidMove(const HexCoord &newPosition, const Board &board) const {
     // 1. 基本验证
     if (!board.isValidPosition(newPosition)) return false;
@@ -268,7 +277,9 @@ bool Beetle::isValidMove(const HexCoord &newPosition, const Board &board) const 
     // 2. 检查移动距离是否为1，甲虫只能移动相邻的格子
     if (position.distance(newPosition) > 1) return false;
 
-    // 返回true，因为甲虫可以爬上其他棋子或空格子
+    // 3. 如果目标位置已被占据，甲虫可以爬上去
+    // 不需要额外验证，因为甲虫总是可以爬到其他棋子上
+
     return true;
 }
 void Beetle::move(Board &board, const HexCoord &newPosition, const PlayerID &currentPlayer) {

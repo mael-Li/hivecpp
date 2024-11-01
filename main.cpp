@@ -1,7 +1,7 @@
 #include "Game.h"
 
 int main() {
-    Game game;
+    piecetype::Game game;
     game.start();
     return 0;
 }

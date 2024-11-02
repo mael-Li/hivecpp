@@ -13,28 +13,14 @@
 #include <map>
 #include <functional>
 
+#include "GameConstants.h"
+
 namespace piecetype {
 
 // Forward declarations
 class Player;
 class Board;
 
-enum class GameState {
-    MENU,
-    PLAYING,
-    PAUSED,
-    GAME_OVER
-};
-
-enum class GameCommand {
-    PLACE_PIECE,
-    MOVE_PIECE,
-    SHOW_HELP,
-    SHOW_BOARD,
-    SHOW_STATS,
-    QUIT,
-    INVALID
-};
 
 struct GameStats {
     int turnCount = 0;
@@ -77,58 +63,49 @@ private:
 };
 
     class Game {
-    public:
-        Game();
-        void start();
-
     private:
         struct PlayerState {
             int turnCount = 0;
             bool mustPlaceQueen = false;
         };
 
-        void initializeGame();
-        void gameLoop();
-
-        void displayStats() const;
-
-        void handleGameCommand(GameCommand command);
-        void switchPlayer();
-
-        void forcePlaceQueen();
-
-        void updateGameState();
-
-        bool isGameOver() const;
-
-        void displayGameStatus() const;
-
-        std::string getWinner() const;
-
-        void clearScreen() const;
-
-        void displayHelp() const;
-
-        void displayMenu() const;
-
-        GameCommand getCommand() const;
         Board board;
         std::vector<std::shared_ptr<Player>> players;
         std::shared_ptr<Player> currentPlayer;
         GameState gameState;
         GameStats stats;
-        std::map<PlayerID, PlayerState> playerStates;  // 玩家状态映射
-        static const std::map<GameCommand, std::string> COMMAND_DESCRIPTIONS;
-        static const int BOARD_SIZE = 10;
+        std::map<PlayerID, PlayerState> playerStates;
+
+        static const int BOARD_SIZE = 2;
+
+        void initializeGame();
+        void gameLoop();
+        void displayStats() const;
+        void handleGameCommand(GameCommand command);
+        void switchPlayer();
+        void forcePlaceQueen();
+        void updateGameState();
+        bool isGameOver() const;
+        void displayGameStatus() const;
+        std::string getWinner() const;
+        void clearScreen() const;
+        void displayHelp() const;
+        void displayMenu() const;
+        GameCommand getCommand() const;
+
+    public:
+        Game();
+        void start();
+
+        const Board& getBoard() const {
+            return board;
+        }
+        // 2. 非const版本返回普通引用
+        Board& getBoard() {
+            return board;
+        }
     };
-// Constants for piece types and their symbols
-const std::map<std::string, PieceName> PIECE_TYPES = {
-    {"Q", PieceName::Queen},
-    {"A", PieceName::Ant},
-    {"S", PieceName::Spider},
-    {"B", PieceName::Beetle},
-    {"G", PieceName::Grasshopper}
-};
+
 
 }
 

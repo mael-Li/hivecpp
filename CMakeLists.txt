@@ -3,9 +3,12 @@ project(Git_Hive)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(SDL2_DIR E:/BaiduNetdiskDownload/SDL2-2.26.5/x86_64-w64-mingw32)
-include_directories(E:/BaiduNetdiskDownload/SDL2-2.26.5/x86_64-w64-mingw32/include)
-link_directories(E:/BaiduNetdiskDownload/SDL2-2.26.5/x86_64-w64-mingw32/bin)
+# 设置源文件编码
+if(MSVC)
+    add_compile_options("/utf-8")
+else()
+    add_compile_options(-finput-charset=UTF-8)
+endif()
 add_executable(Git_Hive main.cpp
         Hive.h
         Board.cpp
@@ -14,5 +17,20 @@ add_executable(Git_Hive main.cpp
         HexCoord.h
         Game.cpp
         Game.h
+        Scene_manager.cpp
+        Scene_manager.hpp
+        GameConstants.h
 )
-target_link_libraries(Git_Hive mingw32 SDL2 SDL2main)
+# 添加下面SFML配置
+set(SFML_STATIC_LIBRARIES TRUE)
+set(SFML_DIR C:/SFML/SFML-2.6.1/lib/cmake/SFML)
+find_package(SFML COMPONENTS system window graphics audio network REQUIRED)
+include_directories(C:/SFML/SFML-2.6.0/include)
+target_link_libraries(Git_Hive sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
+# 复制资源到生成的exe文件夹
+file(COPY images DESTINATION ${CMAKE_BINARY_DIR})
+# 复制资源文件到构建目录
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
+)

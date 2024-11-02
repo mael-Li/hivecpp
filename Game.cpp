@@ -9,13 +9,22 @@
 #include <chrono>
 
 namespace piecetype {
-    const std::map<GameCommand, std::string> Game::COMMAND_DESCRIPTIONS = {
+    // 定义全局常量
+    const std::map<std::string, PieceName> PIECE_TYPES = {
+        {"Q", PieceName::Queen},
+        {"A", PieceName::Ant},
+        {"S", PieceName::Spider},
+        {"B", PieceName::Beetle},
+        {"G", PieceName::Grasshopper}
+    };
+
+    const std::map<GameCommand, std::string> COMMAND_DESCRIPTIONS = {
         {GameCommand::PLACE_PIECE, "Place a new piece"},
         {GameCommand::MOVE_PIECE, "Move an existing piece"},
-        {GameCommand::SHOW_HELP, "Show game help"},
-        {GameCommand::SHOW_BOARD, "Show current board state"},
-        {GameCommand::SHOW_STATS, "Show game statistics"},
-        {GameCommand::QUIT, "Exit game"}
+        {GameCommand::SHOW_HELP, "Show help"},
+        {GameCommand::SHOW_BOARD, "Show board"},
+        {GameCommand::SHOW_STATS, "Show statistics"},
+        {GameCommand::QUIT, "Exit"}
     };
 
     HumanPlayer::HumanPlayer(const std::string& name, const PlayerID& id)

@@ -21,7 +21,7 @@ static int index_ai;
 namespace piecetype {
     class Board;
     class Piece;
-    enum class PieceName { Queen, Ant, Spider, Beetle, Grasshopper };
+    enum class PieceName { Queen, Ant, Spider, Beetle, Grasshopper,Worm};
     enum class PlayerID {player1,player2,playerai,playernobody};
     enum class Victory {
         NONE,
@@ -380,6 +380,14 @@ public:
         explicit HiveContinuityException(const std::string& message)
             : std::runtime_error(message) {}
     };
-} // namespace piecetype
+    class Worm : public Piece {
+    public:
+        Worm(PlayerID player) : Piece(PieceName::Worm, player) {}
+        std::string getName() const override { return "W"; }
+        bool isValidMove(const HexCoord& newPosition, const Board& board) const override;
+        void move(Board& board, const HexCoord& newPosition, const PlayerID&) override;
+        HexCoord getPosition() const override { return position; }
+    };
+}// namespace piecetype
 
 #endif //HIVE_H

@@ -36,7 +36,13 @@ namespace piecetype {
             // 比较逻辑
             return q ==other.q&&r ==other.r;
         }
-
+        // 添加小于运算符
+        bool operator<(const HexCoord& other) const {
+            if (q != other.q) {
+                return q < other.q;
+            }
+            return r < other.r;
+        }
         const HexCoord operator-(const HexCoord & hex_coord) const {
             return HexCoord(q - hex_coord.q, r - hex_coord.r);
         }

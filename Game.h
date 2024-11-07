@@ -77,7 +77,6 @@ private:
         std::map<PlayerID, PlayerState> playerStates;
 
         static const int BOARD_SIZE = 2;
-
         void initializeGame();
         void gameLoop();
         void displayStats() const;
@@ -92,11 +91,13 @@ private:
         void displayHelp() const;
         void displayMenu() const;
         GameCommand getCommand() const;
-
+        bool hasExtendedPieces;
     public:
-        Game();
+        Game(bool isPvP, bool useExtendedPieces);
         void start();
-
+        static void displayStartScreen();
+        static bool getGameMode();  // true for PvP, false for PvAI
+        static bool getUseExtendedPieces();
         const Board& getBoard() const {
             return board;
         }
@@ -105,7 +106,14 @@ private:
             return board;
         }
     };
+    inline void setColor(int color) {
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hConsole, color);
+    }
 
+    inline void resetColor() {
+        setColor(7); // 7 是默认的白色
+    }
 
 }
 

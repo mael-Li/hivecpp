@@ -15,7 +15,8 @@ namespace piecetype {
         {"A", PieceName::Ant},
         {"S", PieceName::Spider},
         {"B", PieceName::Beetle},
-        {"G", PieceName::Grasshopper}
+        {"G", PieceName::Grasshopper},
+        {"W", PieceName::Worm}
     };
 
     const std::map<GameCommand, std::string> COMMAND_DESCRIPTIONS = {
@@ -183,6 +184,7 @@ namespace piecetype {
             case PieceName::Spider: return std::make_shared<Spider>(id);
             case PieceName::Beetle: return std::make_shared<Beetle>(id);
             case PieceName::Grasshopper: return std::make_shared<Grasshopper>(id);
+            case PieceName::Worm: return std::make_shared<Worm>(id);
             default: return nullptr;
         }
     }
@@ -195,7 +197,19 @@ namespace piecetype {
         return true;
     }
 
-    Game::Game() : board(BOARD_SIZE), gameState(GameState::MENU) {
+    // 在 Game.cpp 中修改构造函数实现
+    Game::Game(bool isPvP, bool useExtendedPieces)
+        : board(BOARD_SIZE), gameState(GameState::MENU), hasExtendedPieces(useExtendedPieces) {
+        players.clear();
+        players.push_back(std::make_shared<HumanPlayer>("Player 1", PlayerID::player1));
+        players.push_back(std::make_shared<HumanPlayer>("Player 2", PlayerID::player2));
+
+        // 如果使用扩展棋子，为每个玩家添加蚯蚓棋子
+        if (hasExtendedPieces) {
+            board.piecesAvailable[PlayerID::player1][PieceName::Worm] = 1;
+            board.piecesAvailable[PlayerID::player2][PieceName::Worm] = 1;
+        }
+
         initializeGame();
     }
 
@@ -259,6 +273,115 @@ namespace piecetype {
             std::cout << "\nGame Over! " << getWinner() << " wins!\n";
         }
     }
+    void Game::displayStartScreen() {
+        // 设置为青色
+        setColor(11);
+        std::cout << "================================\n";
+
+        // 设置为黄色
+        setColor(14);
+        std::cout << "           HIVE GAME\n";
+
+        // 设置为青色
+        setColor(11);
+        std::cout << "================================\n\n";
+
+        // 设置为黄色，显示ASCII艺术
+        setColor(14);
+        std::cout << "    \\/\n";
+        std::cout << "    /\\_/\\\n";
+        std::cout << "   (>°.°<)\n";
+        std::cout << "    \\_^_/\n\n";
+
+        // 设置为白色，显示游戏描述
+        setColor(15);
+        std::cout << "A strategic board game where you must\n";
+        std::cout << "surround your opponent's queen bee\n";
+        std::cout << "while protecting your own.\n\n";
+
+        // 添加加载动画
+        std::cout << "Loading";
+        for (int i = 0; i < 3; ++i) {
+            std::cout << ".";
+            std::cout.flush();
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+        std::cout << "\n\n";
+
+        resetColor();
+    }
+    bool Game::getGameMode() {
+        while (true) {
+            setColor(10); // 绿色
+            std::cout << "\nSelect Game Mode:\n";
+            resetColor();
+
+            setColor(11); // 亮蓝色
+            std::cout << "1. Player vs Player\n";
+
+            setColor(12); // 红色
+            std::cout << "2. Player vs AI (Coming Soon)\n";
+
+            setColor(15); // 亮白色
+            std::cout << "Enter your choice (1-2): ";
+            resetColor();
+
+            int choice;
+            if (std::cin >> choice) {
+                if (choice == 1) {
+                    return true;
+                } else if (choice == 2) {
+                    setColor(12); // 红色
+                    std::cout << "\nAI mode is currently under development.\n";
+                    std::cout << "Defaulting to Player vs Player mode.\n";
+                    resetColor();
+                    return true;
+                }
+            }
+
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            setColor(12); // 红色
+            std::cout << "Invalid choice. Please try again.\n";
+            resetColor();
+        }
+    }
+
+    bool Game::getUseExtendedPieces() {
+        while (true) {
+            setColor(10); // 绿色
+            std::cout << "\nWould you like to use the Worm piece?\n";
+
+            setColor(15); // 亮白色
+            std::cout << "Worm: Can move 3 spaces under the hive\n";
+            std::cout << "and swap positions with insects.\n\n";
+
+            setColor(11); // 亮蓝色
+            std::cout << "1. Yes\n";
+
+            setColor(12); // 红色
+            std::cout << "2. No\n";
+
+            setColor(15); // 亮白色
+            std::cout << "Enter your choice (1-2): ";
+            resetColor();
+
+            int choice;
+            if (std::cin >> choice) {
+                if (choice == 1 || choice == 2) {
+                    return choice == 1;
+                }
+            }
+
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            setColor(12); // 红色
+            std::cout << "Invalid choice. Please try again.\n";
+            resetColor();
+        }
+    }
 
     GameCommand Game::getCommand() const {
         int choice;
@@ -278,34 +401,48 @@ namespace piecetype {
     }
 
     void Game::displayMenu() const {
-        std::cout << "\nAvailable Commands:\n";
+        std::cout << "\n\033[1;36mAvailable Commands:\033[0m\n";
         int i = 1;
         for (const auto& [command, description] : COMMAND_DESCRIPTIONS) {
-            std::cout << i++ << ". " << description << "\n";
+            // 使用不同颜色显示不同类型的命令
+            if (command == GameCommand::PLACE_PIECE || command == GameCommand::MOVE_PIECE) {
+                std::cout << "\033[1;32m"; // 绿色显示主要操作
+            } else if (command == GameCommand::QUIT) {
+                std::cout << "\033[1;31m"; // 红色显示退出
+            } else {
+                std::cout << "\033[1;34m"; // 蓝色显示其他选项
+            }
+            std::cout << i++ << ". " << description << "\033[0m\n";
         }
     }
 
     void Game::displayGameStatus() const {
-        std::cout << "\n=== Current Game Status ===\n";
-        std::cout << "Current Player: " << currentPlayer->getName() << "\n";
+        std::cout << "\n\033[1;33m=== Current Game Status ===\033[0m\n";
+        std::cout << "Current Player: " << "\033[1;36m" << currentPlayer->getName() << "\033[0m\n";
 
-        // 安全地访问玩家状态
         auto stateIt = playerStates.find(currentPlayer->getID());
         if (stateIt != playerStates.end()) {
             const auto& state = stateIt->second;
-            std::cout << "Turn: " << state.turnCount + 1 << "\n";
+            std::cout << "Turn: " << "\033[1;32m" << state.turnCount + 1 << "\033[0m\n";
 
             if (state.mustPlaceQueen) {
-                std::cout << "*** Queen Bee must be placed this turn! ***\n";
+                std::cout << "\033[1;31m*** Queen Bee must be placed this turn! ***\033[0m\n";
             }
 
             if (!board.isQueenPlaced(currentPlayer->getID())) {
                 int turnsRemaining = 3 - std::min(state.turnCount, 3);
                 if (turnsRemaining > 0) {
-                    std::cout << "Queen Bee not yet placed ("
+                    std::cout << "\033[1;33mQueen Bee not yet placed ("
                               << turnsRemaining
-                              << " turns remaining)\n";
+                              << " turns remaining)\033[0m\n";
                 }
+            }
+
+            // 显示扩展棋子状态
+            if (hasExtendedPieces) {
+                std::cout << "\033[1;35mExtended Piece (Worm) Available: "
+                          <<  (board.piecesAvailable.at(currentPlayer->getID()).at(PieceName::Worm) > 0 ? "Yes" : "No")
+                          << "\033[0m\n";
             }
         }
 
@@ -313,23 +450,40 @@ namespace piecetype {
     }
 
     void Game::displayHelp() const {
-        std::cout << "\n=== Game Rules ===\n"
-                  << "1. Players take turns placing or moving pieces\n"
+        std::cout << "\n\033[1;36m=== Game Rules ===\033[0m\n"
+                  << "\033[1;37m1. Players take turns placing or moving pieces\n"
                   << "2. The Queen Bee must be placed by turn 4\n"
                   << "3. To win, surround the opponent's Queen Bee\n"
-                  << "4. Each piece type has unique movement rules\n\n";
+                  << "4. Each piece type has unique movement rules:\n"
+                  << "   - Queen (Q): Moves one space at a time\n"
+                  << "   - Ant (A): Can move any number of spaces around the hive\n"
+                  << "   - Spider (S): Must move exactly three spaces\n"
+                  << "   - Beetle (B): Moves one space, can climb on top of other pieces\n"
+                  << "   - Grasshopper (G): Must jump in a straight line over other pieces\n";
+
+        if (hasExtendedPieces) {
+            std::cout << "   - Worm (W): Can move three spaces under the hive and swap positions\n";
+        }
+
+        std::cout << "\033[0m\n";
     }
 
     void Game::displayStats() const {
-        std::cout << "\n=== Game Statistics ===\n"
-                  << "Total Turns: " << stats.turnCount << "\n"
+        std::cout << "\n\033[1;36m=== Game Statistics ===\033[0m\n"
+                  << "\033[1;37mTotal Turns: " << stats.turnCount << "\n"
                   << "Pieces Placed: " << stats.piecesPlaced << "\n"
                   << "Player 1 Moves: " << stats.movesMade.at(PlayerID::player1) << "\n"
-                  << "Player 2 Moves: " << stats.movesMade.at(PlayerID::player2) << "\n";
-    }
+                  << "Player 2 Moves: " << stats.movesMade.at(PlayerID::player2);
 
+        if (hasExtendedPieces) {
+            std::cout << "\nWorm Pieces Used: "
+                      << (2 - (board.piecesAvailable.at(PlayerID::player1).at(PieceName::Worm) +
+                              board.piecesAvailable.at(PlayerID::player2).at(PieceName::Worm)));
+        }
+
+        std::cout << "\033[0m\n";
+    }
     void Game::handleGameCommand(GameCommand command) {
-        // 安全地获取当前玩家状态
         auto stateIt = playerStates.find(currentPlayer->getID());
         if (stateIt == playerStates.end()) {
             throw std::runtime_error("Player state not initialized properly");
@@ -338,7 +492,6 @@ namespace piecetype {
         auto& currentPlayerState = stateIt->second;
 
         try {
-            // 检查是否必须放置蜂后
             if (currentPlayerState.turnCount >= 3 && !board.isQueenPlaced(currentPlayer->getID())) {
                 currentPlayerState.mustPlaceQueen = true;
             }
@@ -348,11 +501,15 @@ namespace piecetype {
                     currentPlayer->makeMove(board, command);
                     currentPlayerState.turnCount++;
                     stats.movesMade[currentPlayer->getID()]++;
+                    stats.piecesPlaced++;
                     break;
                 }
                 case GameCommand::MOVE_PIECE: {
                     if (currentPlayerState.mustPlaceQueen) {
                         throw InvalidMoveException("You must place your Queen Bee before moving pieces!");
+                    }
+                    if (hasExtendedPieces && board.getTopPiece(HexCoord())->getEumName() == PieceName::Worm) {
+                        std::cout << "\033[1;35mMoving a Worm: Remember you can swap positions!\033[0m\n";
                     }
                     currentPlayer->makeMove(board, command);
                     currentPlayerState.turnCount++;
@@ -372,42 +529,40 @@ namespace piecetype {
                     break;
             }
         } catch (const std::exception& e) {
-            std::cout << "Error: " << e.what() << "\n";
+            std::cout << "\033[1;31mError: " << e.what() << "\033[0m\n";
         }
     }
 
+
     void Game::forcePlaceQueen() {
-        std::cout << "\nYou must place your Queen Bee. Enter coordinates (x y): ";
+        std::cout << "\n\033[1;31mYou must place your Queen Bee. Enter coordinates (x y): \033[0m";
         int x, y;
         while (true) {
             if (!(std::cin >> x >> y)) {
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << "Invalid input. Please enter two numbers: ";
+                std::cout << "\033[1;31mInvalid input. Please enter two numbers: \033[0m";
                 continue;
             }
 
             try {
                 auto queen = std::make_shared<QueenBee>(currentPlayer->getID());
                 board.addPiece(queen, HexCoord(x, y), currentPlayer->getID());
-                std::cout << "Queen Bee placed at (" << x << "," << y << ")\n";
+                std::cout << "\033[1;32mQueen Bee placed at (" << x << "," << y << ")\033[0m\n";
                 break;
             } catch (const std::exception& e) {
-                std::cout << "Invalid placement: " << e.what() << "\nTry again: ";
+                std::cout << "\033[1;31mInvalid placement: " << e.what() << "\nTry again: \033[0m";
             }
         }
     }
 
     void Game::switchPlayer() {
-        // 切换当前玩家
         currentPlayer = (currentPlayer == players[0]) ? players[1] : players[0];
-
-        // 安全检查新的当前玩家状态是否存在
         if (playerStates.find(currentPlayer->getID()) == playerStates.end()) {
             playerStates[currentPlayer->getID()] = PlayerState();
         }
-
         stats.turnCount++;
+        std::cout << "\n\033[1;36mSwitching to " << currentPlayer->getName() << "'s turn\033[0m\n";
     }
     void Game::updateGameState() {
         Victory victory = board.checkVictory();
@@ -432,23 +587,36 @@ namespace piecetype {
         }
     }
     bool Game::isGameOver() const {
-        return gameState == GameState::GAME_OVER;
+        if (gameState == GameState::GAME_OVER) {
+            std::cout << "\n\033[1;33m=== Game Over ===\033[0m\n";
+            return true;
+        }
+        return false;
     }
+
 
 
     std::string Game::getWinner() const {
         Victory victory = board.checkVictory();
+        std::string result;
+
         switch (victory) {
             case Victory::PLAYER1_WINS:
-                return players[0]->getName();
+                result = "\033[1;32m" + players[0]->getName() + " Wins!\033[0m";
+            break;
             case Victory::PLAYER2_WINS:
-                return players[1]->getName();
+                result = "\033[1;32m" + players[1]->getName() + " Wins!\033[0m";
+            break;
             case Victory::DRAW:
-                return "Draw - Game ended in a stalemate";
+                result = "\033[1;33mDraw - Game ended in a stalemate\033[0m";
+            break;
             default:
-                return "Game in progress";
+                result = "\033[1;37mGame in progress\033[0m";
         }
+        return result;
     }
+
+
     void Game::clearScreen() const {
 #ifdef _WIN32
         system("cls");

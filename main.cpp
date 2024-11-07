@@ -1,13 +1,13 @@
 #include "Game.h"
-#include "Scene_manager.hpp"
+
 int main() {
-    // 获取场景管理器的实例
-    SceneManager& manager = SceneManager::getInstance();
+    using namespace piecetype;
+    Game::displayStartScreen();
+    bool isPvP = Game::getGameMode();
+    bool useExtendedPieces = Game::getUseExtendedPieces();
+    // 创建游戏实例并开始游戏
+    Game game(isPvP, useExtendedPieces);
+    game.start();
 
-    // 初始化场景管理器
-    manager.init();
-
-    // 运行游戏循环
-    manager.run();
     return 0;
 }

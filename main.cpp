@@ -1,13 +1,13 @@
 #include "Game.h"
+#include "Hive_GUI.hpp"
 
 int main() {
-    using namespace piecetype;
-    Game::displayStartScreen();
-    bool isPvP = Game::getGameMode();
-    bool useExtendedPieces = Game::getUseExtendedPieces();
-    // 创建游戏实例并开始游戏
-    Game game(isPvP, useExtendedPieces);
-    game.start();
-
+    try {
+        piecetype::HiveGUI game;
+        game.run();
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
     return 0;
 }

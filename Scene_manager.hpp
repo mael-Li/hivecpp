@@ -175,7 +175,7 @@ private:
 public:
     HexagonPiece(const std::string& letter, const sf::Font& font,
                  const sf::Vector2f& pos, bool isPlayer1)
-        : position(pos), originalPosition(pos), isPlayer1(isPlayer1) {
+        : position(pos), originalPosition(pos), isPlayer1(isPlayer1){
 
         hexagon.setPointCount(6);
         hexagon.setRadius(HEX_SIZE);
@@ -195,7 +195,9 @@ public:
         text.setOrigin(textBounds.width/2, textBounds.height/2);
         text.setPosition(pos.x + HEX_SIZE, pos.y + HEX_SIZE);
     }
-
+    const sf::Vector2f & getPosition()const{return position;}const
+    void setisDragging(bool a){isDragging = a;}
+    sf::Text getText(){return text;}
     void handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
         if (event.type == sf::Event::MouseButtonPressed) {
             sf::Vector2f mousePos = window.mapPixelToCoords(
@@ -229,6 +231,7 @@ public:
         hexagon.setPosition(position);
         text.setPosition(position.x + HEX_SIZE, position.y + HEX_SIZE);
     }
+    void setPosition(sf::Vector2f& pos){position = pos;}
     bool isDragging_()const{ return isDragging; }
 
     void draw(sf::RenderWindow& window) {
@@ -364,56 +367,330 @@ public:
 // GameScene class
 class GameScene : public Scene {
 private:
-    std::vector<HexagonPiece> player1Pieces;  // 玩家1的棋子
-    std::vector<HexagonPiece> player2Pieces;  // 玩家2的棋子
-    std::map<std::string, int> player1PieceCounts;  // 玩家1的棋子数量
-    std::map<std::string, int> player2PieceCounts;  // 玩家2的棋子数量
+    // 新增：跟踪棋子状态和位置的数据结构
+    struct PieceState {
+        piecetype::PieceName type;
+        piecetype::PlayerID playerID;
+        piecetype::HexCoord boardPosition;
+        sf::Vector2f screenPosition;
+        bool isPlaced;
+        bool canBeMoved;
+    };
+
+    struct HexagonCell {
+        sf::Vector2f position;
+        piecetype::HexCoord coord;
+        bool isOccupied;
+        std::vector<PieceState*> pieces;  // 支持堆叠
+    };
+    // UI 元素
+    std::vector<HexagonPiece> player1Pieces;
+    std::vector<HexagonPiece> player2Pieces;
+    std::map<std::string, int> player1PieceCounts;
+    std::map<std::string, int> player2PieceCounts;
+
     piecetype::Game game;
     bool isPlayer1Turn = true;  // 当前回合玩家
     // 存储棋盘格子的位置
     std::vector<std::pair<sf::Vector2f, bool>> gridPositions;
-    static constexpr float HEX_SIZE = 30.0f;
-    static constexpr float HORIZONTAL_SPACING = HEX_SIZE * 1.732f;  // √3 * HEX_SIZE
-    static constexpr float VERTICAL_SPACING = HEX_SIZE * 1.5f;
+    // 调整六边形大小和间距
+    static constexpr float HEX_SIZE = 30.0f; // 六边形大小
+    static constexpr float HEX_WIDTH = HEX_SIZE * 2.0f; // 六边形宽度
+    static constexpr float HEX_HEIGHT = HEX_SIZE * sqrt(3.0f); // 六边形高度
+    static constexpr float HORIZONTAL_SPACING = HEX_WIDTH * 0.75f; // 水平间距
+    static constexpr float VERTICAL_SPACING = HEX_HEIGHT; // 垂直间距
+    std::map<HexagonPiece*, PieceState> pieceStates;
+    std::vector<HexagonCell> hexGrid;
+    HexagonPiece* selectedPiece = nullptr;
+    sf::Vector2f originalPosition;
+
+
 public:
     GameScene() {
-        if (!FontManager::getInstance().isLoaded()) {
-            std::cerr << "Warning: Font not loaded in GameScene" << std::endl;
+        initializeGame();
+        initializeGrid();
+        createPieces();
+    }
+    // 创建所有游戏棋子
+    void createPieces() {
+        if (!FontManager::getInstance().isLoaded()) return;
+        const sf::Font& font = FontManager::getInstance().getFont();
+
+        // 创建玩家1的棋子（上方）
+        float startY1 = 50;
+        float startX1 = 100;
+        createPlayerPieces(player1Pieces, player1PieceCounts, font, startX1, startY1, true);
+
+        // 创建玩家2的棋子（下方）
+        float startY2 = 650;
+        float startX2 = 100;
+        createPlayerPieces(player2Pieces, player2PieceCounts, font, startX2, startY2, false);
+
+        // 初始化棋子状态
+        initializePieceStates();
+    }
+    // 初始化所有棋子的状态
+    void initializePieceStates() {
+        // 初始化玩家1棋子状态
+        for (auto& piece : player1Pieces) {
+            PieceState state;
+            state.playerID = piecetype::PlayerID::player1;
+            state.isPlaced = false;
+            state.canBeMoved = true;
+            state.screenPosition = piece.getPosition();
+            state.type = pieceStates[&piece].type;
+            pieceStates[&piece] = state;
+        }
+
+        // 初始化玩家2棋子状态
+        for (auto& piece : player2Pieces) {
+            PieceState state;
+            state.playerID = piecetype::PlayerID::player2;
+            state.isPlaced = false;
+            state.canBeMoved = true;
+            state.screenPosition = piece.getPosition();
+            state.type = pieceStates[&piece].type;
+            pieceStates[&piece] = state;
+        }
+    }
+    // 根据字母获取棋子类型
+    piecetype::PieceName getPieceTypeFromLetter(const std::string& letter) {
+        char upperLetter = std::toupper(letter[0]);
+        switch (upperLetter) {
+            case 'Q': return piecetype::PieceName::Queen;    // 蜂后
+            case 'A': return piecetype::PieceName::Ant;      // 蚂蚁
+            case 'S': return piecetype::PieceName::Spider;   // 蜘蛛
+            case 'B': return piecetype::PieceName::Beetle;   // 甲虫
+            case 'G': return piecetype::PieceName::Grasshopper; // 蚱蜢
+            default: throw std::runtime_error("未知的棋子类型");
+        }
+    }
+    // 找到指定位置的棋子
+    HexagonPiece* findPieceAtPosition(const sf::Vector2f& pos) {
+        // 检查玩家1的棋子
+        for (auto& piece : player1Pieces) {
+            sf::Vector2f piecePos = piece.getPosition();
+            float distance = std::sqrt(
+                std::pow(pos.x - piecePos.x - HEX_SIZE, 2) +
+                std::pow(pos.y - piecePos.y - HEX_SIZE, 2)
+            );
+            if (distance < HEX_SIZE) return &piece;
+        }
+
+        // 检查玩家2的棋子
+        for (auto& piece : player2Pieces) {
+            sf::Vector2f piecePos = piece.getPosition();
+            float distance = std::sqrt(
+                std::pow(pos.x - piecePos.x - HEX_SIZE, 2) +
+                std::pow(pos.y - piecePos.y - HEX_SIZE, 2)
+            );
+            if (distance < HEX_SIZE) return &piece;
+        }
+
+        return nullptr;
+    }
+    // 找到最近的格子
+    HexagonCell* findNearestCell(const sf::Vector2f& pos) {
+        HexagonCell* nearest = nullptr;
+        float minDistance = std::numeric_limits<float>::max();
+
+        for (auto& cell : hexGrid) {
+            float distance = std::sqrt(
+                std::pow(pos.x - cell.position.x - HEX_SIZE, 2) +
+                std::pow(pos.y - cell.position.y - HEX_SIZE, 2)
+            );
+
+            if (distance < minDistance && distance < HEX_SIZE * 1.5) {
+                minDistance = distance;
+                nearest = &cell;
+            }
+        }
+
+        return nearest;
+    }
+    // 创建特定类型的棋子
+    std::shared_ptr<piecetype::Piece> createPieceForType(
+        piecetype::PieceName type, piecetype::PlayerID playerID) {
+        switch (type) {
+            case piecetype::PieceName::Queen:
+                return std::make_shared<piecetype::QueenBee>(playerID);
+            case piecetype::PieceName::Ant:
+                return std::make_shared<piecetype::Ant>(playerID);
+            case piecetype::PieceName::Spider:
+                return std::make_shared<piecetype::Spider>(playerID);
+            case piecetype::PieceName::Beetle:
+                return std::make_shared<piecetype::Beetle>(playerID);
+            case piecetype::PieceName::Grasshopper:
+                return std::make_shared<piecetype::Grasshopper>(playerID);
+            default:
+                throw std::runtime_error("未知的棋子类型");
+        }
+    }
+    // 重置棋子位置
+    void resetPiece() {
+        if (!selectedPiece) return;
+        selectedPiece->snapToPosition(originalPosition);
+    }
+
+
+    void initializeGame() {
+        // 初始化游戏状态
+        isPlayer1Turn = true;
+        game = piecetype::Game();  // 确保游戏对象被正确初始化
+        // 初始化游戏状态和计数器
+        player1PieceCounts = {{"Q", 1}, {"A", 3}, {"S", 2}, {"B", 2}, {"G", 3}};
+        player2PieceCounts = {{"q", 1}, {"a", 3}, {"s", 2}, {"b", 2}, {"g", 3}};
+    }
+    void initializeGrid() {
+        const int GRID_SIZE = 8; // 调整网格大小
+        const float centerX = 512.0f; // 窗口中心X
+        const float centerY = 384.0f; // 窗口中心Y
+
+        // 清空现有网格
+        hexGrid.clear();
+        gridPositions.clear();
+
+        // 创建六边形网格
+        for (int row = -GRID_SIZE; row <= GRID_SIZE; ++row) {
+            int rowOffset = floor(row/2.0f); // 计算行偏移
+            for (int col = -GRID_SIZE-rowOffset; col <= GRID_SIZE-rowOffset; ++col) {
+                // 计算六边形的坐标
+                float x = centerX + col * HEX_WIDTH + (row % 2) * HEX_WIDTH/2;
+                float y = centerY + row * HEX_HEIGHT * 0.75f;
+
+                // 创建并存储六边形单元格
+                HexagonCell cell;
+                cell.position = sf::Vector2f(x, y);
+                cell.coord = piecetype::HexCoord(col, row);
+                cell.isOccupied = false;
+                hexGrid.push_back(cell);
+
+                // 同时存储到 gridPositions
+                gridPositions.push_back({sf::Vector2f(x, y), false});
+            }
+        }
+    }
+
+
+    bool isValidMove(const HexagonPiece* piece, const HexagonCell& targetCell) {
+        auto it = pieceStates.find(const_cast<HexagonPiece*>(piece));
+        if (it == pieceStates.end()) return false;
+
+        const PieceState& state = it->second;
+
+        // 如果是新棋子放置
+        if (!state.isPlaced) {
+            return validateNewPlacement(state, targetCell);
+        }
+
+        // 如果是移动已放置的棋子
+        return validatePieceMove(state, targetCell);
+    }
+
+    bool validateNewPlacement(const PieceState& state, const HexagonCell& targetCell) {
+        // 第一个棋子可以放在任何位置
+        if (game.getBoard().getTotalPieces() == 0) return true;
+
+        return game.getBoard().canPlacePiece(targetCell.coord,
+            isPlayer1Turn ? piecetype::PlayerID::player1 : piecetype::PlayerID::player2);
+    }
+
+    bool validatePieceMove(const PieceState& state, const HexagonCell& targetCell) {
+        // 检查连续性
+        if (!game.getBoard().willMoveMaintainContinuity(state.boardPosition, targetCell.coord)) {
+            return false;
+        }
+
+        // 获取棋子对象
+        auto piece = game.getBoard().getPieceAt(state.boardPosition);
+        if (!piece) return false;
+
+        // 检查是否是"眼"位置
+        if (game.getBoard().isEye(targetCell.coord)) {
+            return state.type == piecetype::PieceName::Grasshopper;
+        }
+
+        // 验证具体棋子类型的移动规则
+        return piece->isValidMove(targetCell.coord, game.getBoard());
+    }
+
+    void handlePieceSelection(const sf::Vector2f& mousePos) {
+        // 找出被点击的棋子
+        HexagonPiece* clickedPiece = findPieceAtPosition(mousePos);
+        if (!clickedPiece) return;
+
+        auto it = pieceStates.find(clickedPiece);
+        if (it == pieceStates.end()) return;
+
+        // 检查是否是当前玩家的棋子
+        if ((isPlayer1Turn && it->second.playerID != piecetype::PlayerID::player1) ||
+            (!isPlayer1Turn && it->second.playerID != piecetype::PlayerID::player2)) {
             return;
         }
 
-        const sf::Font& font = FontManager::getInstance().getFont();
+        // 检查是否已放置且移动是否会破坏连续性
+        if (it->second.isPlaced) {
+            if (!it->second.canBeMoved ||
+                !game.getBoard().willMoveMaintainContinuity(it->second.boardPosition,
+                                                          it->second.boardPosition)) {
+                return;
+            }
+        }
 
-        // 初始化玩家1的棋子数量
-        player1PieceCounts = {
-            {"Q", 1},  // Queen
-            {"A", 3},  // Ant
-            {"S", 2},  // Spider
-            {"B", 2},  // Beetle
-            {"G", 3}   // Grasshopper
-        };
-
-        // 初始化玩家2的棋子数量（使用小写字母区分）
-        player2PieceCounts = {
-            {"q", 1},  // Queen
-            {"a", 3},  // Ant
-            {"s", 2},  // Spider
-            {"b", 2},  // Beetle
-            {"g", 3}   // Grasshopper
-        };
-
-        // 创建玩家1的初始棋子
-        float startX = 50;
-        float startY = 50;
-        createPlayerPieces(player1Pieces, player1PieceCounts, font, startX, startY, true);
-
-        // 创建玩家2的初始棋子
-        startY = 600;
-        createPlayerPieces(player2Pieces, player2PieceCounts, font, startX, startY, false);
-
-        // 初始化棋盘格子位置
-        initializeGridPositions();
+        selectedPiece = clickedPiece;
+        originalPosition = clickedPiece->getPosition();
     }
+
+    void handlePiecePlacement(const sf::Vector2f& mousePos) {
+        if (!selectedPiece) return;
+
+        // 找到最近的有效格子
+        HexagonCell* targetCell = findNearestCell(mousePos);
+        if (!targetCell) {
+            resetPiece();
+            return;
+        }
+
+        // 验证移动
+        if (isValidMove(selectedPiece, *targetCell)) {
+            completePieceMovement(*targetCell);
+        } else {
+            resetPiece();
+        }
+
+        selectedPiece = nullptr;
+    }
+
+    void completePieceMovement(HexagonCell& targetCell) {
+        auto& state = pieceStates[selectedPiece];
+
+        // 更新游戏状态
+        if (!state.isPlaced) {
+            // 新棋子放置
+            auto piece = createPieceForType(state.type, state.playerID);
+            game.getBoard().addPiece(piece, targetCell.coord, state.playerID);
+            state.isPlaced = true;
+        } else {
+            // 移动已存在的棋子
+            auto piece = game.getBoard().getPieceAt(state.boardPosition);
+            if (piece) {
+                piece->move(game.getBoard(), targetCell.coord, state.playerID);
+            }
+        }
+
+        // 更新棋子状态
+        state.boardPosition = targetCell.coord;
+        state.screenPosition = targetCell.position;
+        selectedPiece->snapToPosition(targetCell.position);
+
+        // 更新格子状态
+        targetCell.isOccupied = true;
+        targetCell.pieces.push_back(&state);
+
+        // 切换玩家
+        switchTurn();
+    }
+
     void createPlayerPieces(std::vector<HexagonPiece>& pieces,
                       const std::map<std::string, int>& pieceCounts,
                       const sf::Font& font,
@@ -444,38 +721,96 @@ public:
             }
         }
     }
+    void placePiece(HexagonPiece* piece, HexagonCell& targetCell) {
+        auto& state = pieceStates[piece];
 
+        if (!state.isPlaced) {
+            // 新棋子放置
+            auto newPiece = createPieceForType(state.type, state.playerID);
+            try {
+                game.getBoard().addPiece(newPiece, targetCell.coord, state.playerID);
+                state.isPlaced = true;
+                state.boardPosition = targetCell.coord;
+                targetCell.isOccupied = true;
+
+                // 更新计数器
+                if (state.playerID == piecetype::PlayerID::player1) {
+                    player1PieceCounts[piece->getText().getString()]--;
+                } else {
+                    player2PieceCounts[piece->getText().getString()]--;
+                }
+
+                piece->snapToPosition(targetCell.position);
+            } catch (const std::exception& e) {
+                piece->resetPosition();
+                std::cerr << "Failed to place piece: " << e.what() << std::endl;
+            }
+        } else {
+            // 移动已存在的棋子
+            try {
+                auto gamePiece = game.getBoard().getPieceAt(state.boardPosition);
+                if (gamePiece) {
+                    gamePiece->move(game.getBoard(), targetCell.coord, state.playerID);
+                    state.boardPosition = targetCell.coord;
+                    piece->snapToPosition(targetCell.position);
+                }
+            } catch (const std::exception& e) {
+                piece->resetPosition();
+                std::cerr << "Failed to move piece: " << e.what() << std::endl;
+            }
+        }
+    }
     void handleEvent(const sf::Event& event) override {
-        sf::RenderWindow& window = SceneManager::getInstance().getWindow();
+    sf::RenderWindow& window = SceneManager::getInstance().getWindow();
 
-        std::vector<HexagonPiece>& currentPlayerPieces =
-            isPlayer1Turn ? player1Pieces : player2Pieces;
+    if (event.type == sf::Event::MouseButtonPressed) {
+        sf::Vector2f mousePos = window.mapPixelToCoords(
+            sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
 
-        if (event.type == sf::Event::MouseButtonReleased) {
+        // 只有当没有选中棋子时才尝试选择新棋子
+        if (!selectedPiece) {
+            auto clickedPiece = findPieceAtPosition(mousePos);
+            if (clickedPiece && ((isPlayer1Turn && pieceStates[clickedPiece].playerID == piecetype::PlayerID::player1) ||
+                                (!isPlayer1Turn && pieceStates[clickedPiece].playerID == piecetype::PlayerID::player2))) {
+                selectedPiece = clickedPiece;
+                originalPosition = clickedPiece->getPosition();
+                clickedPiece->setisDragging(true);
+            }
+        }
+    }
+    else if (event.type == sf::Event::MouseButtonReleased) {
+        if (selectedPiece) {
             sf::Vector2f mousePos = window.mapPixelToCoords(
                 sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
 
-            // 检查是否有棋子被放置到棋盘上
-            for (auto& piece : currentPlayerPieces) {
-                if (piece.isDragging_()) {
-                    // 寻找最近的有效格子
-                    auto closestGrid = findClosestValidGrid(mousePos);
-                    if (closestGrid != gridPositions.end()) {
-                        piece.snapToPosition(closestGrid->first);
-                        closestGrid->second = true;  // 标记该格子已被占用
-                        switchTurn();
-                    } else {
-                        piece.resetPosition();  // 如果没有找到有效格子，返回原位置
-                    }
-                }
+            HexagonCell* targetCell = findNearestCell(mousePos);
+            if (targetCell && isValidMove(selectedPiece, *targetCell)) {
+                placePiece(selectedPiece, *targetCell);
+                switchTurn();
+            } else {
+                selectedPiece->resetPosition();
             }
-        }
-
-        // 处理正在拖动的棋子
-        for (auto& piece : currentPlayerPieces) {
-            piece.handleEvent(event, window);
+            selectedPiece->setisDragging(false);
+            selectedPiece = nullptr;
         }
     }
+    else if (event.type == sf::Event::MouseMoved) {
+        if (selectedPiece && selectedPiece->isDragging_()) {
+            sf::Vector2f mousePos = window.mapPixelToCoords(
+                sf::Vector2i(event.mouseMove.x, event.mouseMove.y));
+            selectedPiece->setPosition(mousePos);
+        }
+    }
+
+    // 让所有棋子处理事件
+    for (auto& piece : player1Pieces) {
+        piece.handleEvent(event, window);
+    }
+    for (auto& piece : player2Pieces) {
+        piece.handleEvent(event, window);
+    }
+}
+
     std::vector<std::pair<sf::Vector2f, bool>>::iterator findClosestValidGrid(const sf::Vector2f& pos) {
         float minDistance = std::numeric_limits<float>::max();
         auto closestGrid = gridPositions.end();
@@ -501,13 +836,45 @@ public:
         isPlayer1Turn = !isPlayer1Turn;
     }
 
+    // 更新游戏状态
     void update() override {
-        // 可以在这里添加游戏逻辑更新
+        // 检查胜利条件
+        piecetype::Victory victory = game.getBoard().checkVictory();
+        if (victory != piecetype::Victory::NONE) {
+            handleGameOver(victory);
+        }
+    }
+    // 处理游戏结束
+    void handleGameOver(piecetype::Victory victory) {
+        std::string message;
+        switch (victory) {
+            case piecetype::Victory::PLAYER1_WINS:
+                message = "玩家1获胜！";
+            break;
+            case piecetype::Victory::PLAYER2_WINS:
+                message = "玩家2获胜！";
+            break;
+            case piecetype::Victory::DRAW:
+                message = "平局！";
+            break;
+            default:
+                return;
+        }
+
+        // 创建并显示胜利文本
+        if (FontManager::getInstance().isLoaded()) {
+            sf::Text victoryText;
+            victoryText.setFont(FontManager::getInstance().getFont());
+            victoryText.setString(message);
+            victoryText.setCharacterSize(48);
+            victoryText.setFillColor(sf::Color::Red);
+            victoryText.setPosition(400, 300);
+        }
     }
 
-
+    // 渲染游戏画面
     void render(sf::RenderWindow& window) override {
-        // 绘制棋盘
+        window.clear(sf::Color::White);
         drawHexGrid(window);
 
         // 绘制所有棋子
@@ -518,25 +885,68 @@ public:
             piece.draw(window);
         }
 
-        // 绘制剩余棋子数量
+        // 添加调试信息
+        if (selectedPiece) {
+            sf::CircleShape highlight(HEX_SIZE);
+            highlight.setFillColor(sf::Color(255, 255, 0, 128));
+            highlight.setPosition(selectedPiece->getPosition());
+            window.draw(highlight);
+        }
+
         drawPieceCounts(window);
     }
-
 private:
+    // 绘制回合指示器
+    void drawTurnIndicator(sf::RenderWindow& window) {
+        if (!FontManager::getInstance().isLoaded()) return;
+
+        sf::Text turnText;
+        turnText.setFont(FontManager::getInstance().getFont());
+        turnText.setCharacterSize(24);
+        turnText.setFillColor(sf::Color::Black);
+        turnText.setString("当前回合: 玩家" + std::string(isPlayer1Turn ? "1" : "2"));
+        turnText.setPosition(400, 10);
+        window.draw(turnText);
+    }
     void drawHexGrid(sf::RenderWindow& window) {
+        // 创建基础六边形形状
         sf::CircleShape hexagon(HEX_SIZE, 6);
-        hexagon.setFillColor(sf::Color::Transparent);
-        hexagon.setOutlineThickness(1.f);
-        hexagon.setOutlineColor(sf::Color(200, 200, 200));
         hexagon.setRotation(30.f);
+        hexagon.setFillColor(sf::Color(245, 245, 245)); // 浅灰色填充
+        hexagon.setOutlineThickness(1.f);
+        hexagon.setOutlineColor(sf::Color(100, 100, 100)); // 深灰色边框
+
+        // 设置六边形的原点为其中心
+        hexagon.setOrigin(HEX_SIZE, HEX_SIZE);
 
         // 绘制所有格子
-        for (const auto& [pos, occupied] : gridPositions) {
-            hexagon.setPosition(pos);
+        for (const auto& cell : hexGrid) {
+            hexagon.setPosition(cell.position);
+
+            // 如果格子被占用，使用不同的颜色
+            if (cell.isOccupied) {
+                hexagon.setFillColor(sf::Color(200, 200, 200));
+            } else {
+                hexagon.setFillColor(sf::Color(245, 245, 245));
+            }
+
             window.draw(hexagon);
+
+            // 可选：绘制调试坐标
+            /*if (FontManager::getInstance().isLoaded()) {
+                sf::Text coordText;
+                coordText.setFont(FontManager::getInstance().getFont());
+                coordText.setString("(" + std::to_string(cell.coord.q) + ","
+                                     + std::to_string(cell.coord.r) + ")");
+                coordText.setCharacterSize(8);
+                coordText.setFillColor(sf::Color::Black);
+                coordText.setPosition(cell.position);
+                window.draw(coordText);
+            }*/
         }
     }
 
+    // 绘制棋子数量显示
     void drawPieceCounts(sf::RenderWindow& window) {
         if (!FontManager::getInstance().isLoaded()) return;
 
@@ -546,43 +956,52 @@ private:
         float startX = 800;
         float spacing = 60;
 
-        // 绘制玩家1的计数
+        // 绘制玩家1的剩余棋子数量
         sf::Text text1;
         text1.setFont(font);
         text1.setCharacterSize(16);
         text1.setFillColor(sf::Color::Black);
 
-        float x = startX;
         for (const auto& [piece, count] : player1PieceCounts) {
-            text1.setString(piece + ": " + std::to_string(count));
-            text1.setPosition(x, startY1);
+            std::string pieceName;
+            switch(piece[0]) {
+                case 'Q': pieceName = "蜂后"; break;
+                case 'A': pieceName = "蚂蚁"; break;
+                case 'S': pieceName = "蜘蛛"; break;
+                case 'B': pieceName = "甲虫"; break;
+                case 'G': pieceName = "蚱蜢"; break;
+                default: pieceName = piece;
+            }
+            text1.setString(pieceName + ": " + std::to_string(count));
+            text1.setPosition(startX, startY1);
             window.draw(text1);
-            x += spacing;
+            startX += spacing;
         }
 
-        // 绘制玩家2的计数
+        // 重置X坐标以绘制玩家2的计数
+        startX = 800;
         sf::Text text2;
         text2.setFont(font);
         text2.setCharacterSize(16);
         text2.setFillColor(sf::Color::Black);
 
-        x = startX;
         for (const auto& [piece, count] : player2PieceCounts) {
-            text2.setString(piece + ": " + std::to_string(count));
-            text2.setPosition(x, startY2);
+            std::string pieceName;
+            switch(std::toupper(piece[0])) {
+                case 'Q': pieceName = "蜂后"; break;
+                case 'A': pieceName = "蚂蚁"; break;
+                case 'S': pieceName = "蜘蛛"; break;
+                case 'B': pieceName = "甲虫"; break;
+                case 'G': pieceName = "蚱蜢"; break;
+                default: pieceName = piece;
+            }
+            text2.setString(pieceName + ": " + std::to_string(count));
+            text2.setPosition(startX, startY2);
             window.draw(text2);
-            x += spacing;
+            startX += spacing;
         }
-
-        // 显示当前回合玩家
-        sf::Text turnText;
-        turnText.setFont(font);
-        turnText.setCharacterSize(24);
-        turnText.setFillColor(sf::Color::Black);
-        turnText.setString("Current Turn: Player " + std::string(isPlayer1Turn ? "1" : "2"));
-        turnText.setPosition(400, 10);
-        window.draw(turnText);
     }
+
 };
 
 void SceneManager::pushScene(SceneType type) {

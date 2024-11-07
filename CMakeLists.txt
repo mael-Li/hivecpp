@@ -23,6 +23,7 @@ add_executable(Git_Hive main.cpp
         Aiplayer.cpp
         Hive_GUI.cpp
         Hive_GUI.hpp
+        unmotified.cpp
 )
 # 添加下面SFML配置
 set(SFML_STATIC_LIBRARIES TRUE)

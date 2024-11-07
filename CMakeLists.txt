@@ -17,7 +17,6 @@ add_executable(Git_Hive main.cpp
         HexCoord.h
         Game.cpp
         Game.h
-        Scene_manager.cpp
         Scene_manager.hpp
         GameConstants.h
 )

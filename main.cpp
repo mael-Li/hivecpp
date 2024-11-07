@@ -1,13 +1,13 @@
 #include "Game.h"
 #include "Scene_manager.hpp"
 int main() {
-    try {
-        auto& sceneManager = SceneManager::getInstance();
-        sceneManager.init();
-        sceneManager.run();
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return -1;
-    }
+    // 获取场景管理器的实例
+    SceneManager& manager = SceneManager::getInstance();
+
+    // 初始化场景管理器
+    manager.init();
+
+    // 运行游戏循环
+    manager.run();
     return 0;
 }

@@ -20,6 +20,7 @@ add_executable(Git_Hive main.cpp
         Scene_manager.hpp
         GameConstants.h
         Worm.cpp
+        Aiplayer.cpp
 )
 # 添加下面SFML配置
 set(SFML_STATIC_LIBRARIES TRUE)

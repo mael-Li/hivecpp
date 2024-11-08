@@ -3,9 +3,10 @@
 
 int main() {
     try {
-        piecetype::HiveGUI game;
+        piecetype::HiveGame game;
         game.run();
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }

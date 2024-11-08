@@ -306,6 +306,7 @@ public:
             }
             return true;
         }
+public:
         // 获取位置上的堆叠高度
         int getStackHeight(const HexCoord& coord) const {
             auto it = grid.find(coord);

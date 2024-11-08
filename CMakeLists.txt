@@ -17,17 +17,11 @@ add_executable(Git_Hive main.cpp
         HexCoord.h
         Game.cpp
         Game.h
-        Scene_manager.hpp
         GameConstants.h
         Worm.cpp
         Aiplayer.cpp
 )
-# 添加下面SFML配置
-set(SFML_STATIC_LIBRARIES TRUE)
-set(SFML_DIR C:/SFML/SFML-2.6.1/lib/cmake/SFML)
-find_package(SFML COMPONENTS system window graphics audio network REQUIRED)
-include_directories(C:/SFML/SFML-2.6.0/include)
-target_link_libraries(Git_Hive sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
+
 # 复制资源到生成的exe文件夹
 file(COPY images DESTINATION ${CMAKE_BINARY_DIR})
 # 复制资源文件到构建目录

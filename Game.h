@@ -96,7 +96,7 @@ private:
     std::map<PlayerID, PlayerState> playerStates;
     bool isPvP;
 
-    static const int BOARD_SIZE = 2;
+    static const int BOARD_SIZE = 5;
     void initializeGame();
     void gameLoop();
     void displayStats() const;

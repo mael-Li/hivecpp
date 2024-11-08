@@ -455,35 +455,55 @@ std::vector<HexCoord> Board::getOccupiedNeighbors(const HexCoord &coord) const {
 
 void Board::printBoard() const {
     std::cout << "\nCurrent board state (Size: " << size << "x" << size << ")" << std::endl;
+    // 确定显示范围
+    int minQ = INT_MAX, maxQ = INT_MIN;
+    int minR = INT_MAX, maxR = INT_MIN;
 
-    // 打印列坐标（顶部）
-    printColumnNumbers();
+    // 找出当前棋盘上的棋子范围
+    for (const auto& [coord, _] : grid) {
+        minQ = std::min(minQ, coord.q);
+        maxQ = std::max(maxQ, coord.q);
+        minR = std::min(minR, coord.r);
+        maxR = std::max(maxR, coord.r);
+    }
+    // 扩展显示范围，确保周围有一圈空间
+    minQ = std::max(-size, std::min(minQ - 1, minQ));
+    maxQ = std::min(size, std::max(maxQ + 1, maxQ));
+    minR = std::max(-size, std::min(minR - 1, minR));
+    maxR = std::min(size, std::max(maxR + 1, maxR));
+    // 打印列标签
+    std::cout << "     ";
+    for (int q = minQ; q <= maxQ; ++q) {
+        std::cout << std::setw(3) << q << " ";
+    }
+    std::cout << "\n";
 
     // 打印棋盘内容
-    for (int r = -size; r <= size; ++r) {
+    for (int r = minR; r <= maxR; ++r) {
         // 打印行号
         std::cout << std::setw(3) << r << " ";
 
-        // 计算缩进
-        int indent = std::abs(r);
+        // 计算每行的缩进（实现六边形效果）
+        int indent = r - minR;
         std::cout << std::string(indent * 2, ' ');
 
-        // 打印每一行的内容
-        for (int q = -size - std::min(0, r); q <= size - std::max(0, r); ++q) {
+        // 打印每个位置
+        for (int q = minQ; q <= maxQ; ++q) {
             HexCoord coord(q, r);
-            if (isValidHexPosition(q, r)) {
-                printCell(coord);
-            } else {
-                std::cout << "   ";
-            }
+            printCell(coord);
+            std::cout << "";
         }
 
-        // 打印行尾的行号
-        std::cout << " " << std::setw(3) << r << std::endl;
+        // 在行尾再次打印行号
+        std::cout << "  " << std::setw(2) << r << "\n";
     }
 
-    // 打印列坐标（底部）
-    printColumnNumbers();
+    // 再次打印列标签
+    std::cout << "     ";
+    for (int q = minQ; q <= maxQ; ++q) {
+        std::cout << std::setw(3) << q << " ";
+    }
+    std::cout << "\n\n";
 
     // 打印图例
     printLegend();

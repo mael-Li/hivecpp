@@ -78,17 +78,13 @@ bool Ant::isValidMove(const HexCoord &newPosition, const Board &board) const {
     if (!board.isValidPosition(newPosition)) {
         return false;
     }
-    // 检查新位置是否已被占据
-    if (!board.isPositionOccupied(newPosition)) {
-        return false;
-    }
     // 检查是否是"眼"位置
     if (board.isEye(newPosition)) {
+        throw Pieceexception("Eye");
         return false; // 蚂蚁不能移动到"眼"位置
     }
     // 获取新位置的所有邻居
     std::vector<HexCoord> neighbors = newPosition.neighbors();
-
     // 检查至少有一个邻居位置被占据
     for (const auto& neighbor : neighbors) {
         if (!board.isPositionOccupied(neighbor)) {
@@ -108,12 +104,12 @@ void Ant::move(Board &board, const HexCoord &newPosition, const PlayerID &curren
     if (!isValidMove(newPosition, board)) {
         throw InvalidMoveException("Invalid ant move");
     }
-
+    /*
     // 3. 检查目标位置是否已被占据
     if (!board.isPositionOccupied(newPosition)) {
         throw InvalidMoveException("The target position must be occupied by another piece");
     }
-
+*/
     // 4. 尝试移动并检查蜂巢连续性
     HexCoord oldPosition = getPosition();
     std::cout<<"Position input in fonction is["<<oldPosition.q<<","<<oldPosition.r<<"]"<<std::endl;

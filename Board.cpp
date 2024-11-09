@@ -36,12 +36,12 @@ void Board::addPiece(std::shared_ptr<Piece> piece, HexCoord coord, PlayerID play
     if (isPositionOccupied(coord) && !canStackAt(coord, piece)) {
         throw InvalidMoveException("Only beetles can stack on other pieces");
     }
-
+    /*
     // 验证放置位置的合法性
     if (!canPlacePiece(coord, player)) {
         throw InvalidMoveException("Invalid placement position");
     }
-
+    */
     // 创建或获取格子
     if (grid.find(coord) == grid.end()) {
         grid[coord] = Hexagon();

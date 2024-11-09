@@ -2,6 +2,9 @@
 // Created by 李世佳 on 24-10-15.
 //
 #include <algorithm>
+#include <queue>
+#include <set>
+
 #include "Hive.h"
 
 using namespace piecetype;
@@ -110,16 +113,42 @@ void Ant::move(Board &board, const HexCoord &newPosition, const PlayerID &curren
     recordMove(newPosition);
 }
 bool Spider::isValidMove(const HexCoord &newPosition, const Board &board) const {
+    // 1. 基本检查
+    if (!board.isValidPosition(newPosition) || board.isPositionOccupied(newPosition)) {
+        return false;
+    }
+
+    // 2. 计算距离
+    int dx = newPosition.q - position.q;
+    int dy = newPosition.r - position.r;
+    int distance = std::max({std::abs(dx), std::abs(dy), std::abs(dx + dy)});
+
+    // 距离必须为3
+    if (distance != 3) {
+        return false;
+    }
+
+    // 3. 检查目标位置是否至少与一个其他棋子相邻
+    bool hasAdjacentPiece = false;
+    for (const HexCoord& neighbor : newPosition.neighbors()) {
+        if (neighbor != position && board.isPositionOccupied(neighbor)) {
+            hasAdjacentPiece = true;
+            break;
+        }
+    }
+    if (!hasAdjacentPiece) {
+        return false;
+    }
+
+    return true;
+
+    /*
     // 1. 基本验证
     if (!board.isValidPosition(newPosition)) return false;
     if (board.isPositionOccupied(newPosition)) {
         return false;
     }
     if (position == newPosition) return false;
-    // 检查是否是"眼"位置
-    if (board.isEye(newPosition)) {
-        return false; // 蚂蚁不能移动到"眼"位置
-    }
     // 2. 检查移动步数是否精确为3步
     std::vector<HexCoord> path;
     HexCoord currentPos = position;
@@ -135,16 +164,12 @@ bool Spider::isValidMove(const HexCoord &newPosition, const Board &board) const 
         for (const auto& neighbor : neighbors) {
             // 不能原路返回
             if (neighbor == prevPos) continue;
-
-            // 检查是否可以通过这个邻居移动
-            if (board.isPositionOccupied(neighbor)) {
-                // 找到一个可以移动的相邻位置
-                prevPos = currentPos;
-                currentPos = neighbor;
-                path.push_back(currentPos);
-                foundValidStep = true;
-                break;
-            }
+            // 找到一个可以移动的相邻位置
+            prevPos = currentPos;
+            currentPos = neighbor;
+            path.push_back(currentPos);
+            foundValidStep = true;
+            break;
         }
 
         // 如果无法找到有效的移动，返回false
@@ -153,6 +178,7 @@ bool Spider::isValidMove(const HexCoord &newPosition, const Board &board) const 
 
     // 最后一步必须是目标位置
     return (currentPos == newPosition);
+    */
 }
 void Spider::move(Board &board, const HexCoord &newPosition, const PlayerID &currentPlayer) {
     // 1. 验证移动者身份

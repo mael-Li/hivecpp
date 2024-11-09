@@ -52,10 +52,13 @@ namespace piecetype {
             q += hex_coord.q;
             return *this;
         }
-
+        const HexCoord&operator+(const HexCoord & hex_coord)const {
+            return HexCoord(q+hex_coord.q,r+hex_coord.r);
+        }
         bool operator!=(const HexCoord & hex_coord) const {
             return r != hex_coord.r || q != hex_coord.q;
         }
+
     };
 }
 #endif //HEXCOORD_H

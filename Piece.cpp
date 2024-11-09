@@ -182,10 +182,10 @@ bool Grasshopper::isValidMove(const HexCoord& newPosition, const Board& board) c
         return false;
     }
     // 2. 检查跳跃方向是否在同一直线上
-    if (position.q != newPosition.q &&
-        position.r != newPosition.r &&
-        position.q + position.r != newPosition.q + newPosition.r) {
-        return false;
+    if (position.q == newPosition.q ||
+        position.r == newPosition.r ||
+        position.q + position.r == newPosition.q + newPosition.r) {
+        return true;
         }
 
     // 3. 检查跳跃路径

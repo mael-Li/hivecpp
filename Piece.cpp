@@ -202,17 +202,6 @@ bool Grasshopper::isValidMove(const HexCoord& newPosition, const Board& board) c
         currentPos += direction;
     }
 
-    // 4. 确保至少跳过了一个棋子
-    if (!hasJumpedOverPiece) {
-        return false;
-    }
-
-    // 5. 目标位置检查
-    // 如果目标位置已被占据，但是一个"眼"，允许跳入
-    if (board.isPositionOccupied(newPosition) && !board.isEye(newPosition)) {
-        return false;
-    }
-
     return true;
 }
 void Grasshopper::move(Board &board, const HexCoord &newPosition, const PlayerID &currentPlayer) {

@@ -101,7 +101,7 @@ std::shared_ptr<Piece> Board::removePiece(HexCoord coord) {
     if (hexagon.pieces.empty()) {
         grid.erase(gridIt);
     }
-
+    /*
     // 8. 检查蜂巢连续性
     if (!isHiveContinuous()) {
         // 如果移除导致蜂巢不连续，恢复状态
@@ -115,7 +115,7 @@ std::shared_ptr<Piece> Board::removePiece(HexCoord coord) {
         }
         throw HiveContinuityException("Removing piece would break hive continuity");
     }
-
+    */
     return piece;
 }
 
@@ -367,6 +367,7 @@ bool Board::isHiveContinuous() const {
     return visited.size() == occupied.size();
 }
 bool Board::willMoveMaintainContinuity(const HexCoord &from, const HexCoord &to) const {
+    /*
     // 临时移除棋子
     auto tempGrid = grid;  // 创建网格的副本
 
@@ -386,7 +387,7 @@ bool Board::willMoveMaintainContinuity(const HexCoord &from, const HexCoord &to)
         Board tempBoard = *this;
         tempBoard.grid = tempGrid;
         return tempBoard.isHiveContinuous();
-    }
+    }*/
     return false;
 }
 bool Board::isEye(const HexCoord& coord) const {

@@ -61,12 +61,6 @@ void QueenBee::move(Board &board, const HexCoord &newPosition,const PlayerID&cur
     HexCoord oldPosition = getPosition();
     auto piece = board.removePiece(oldPosition);
 
-    // 4. 临时移除后检查连续性
-    if (!board.isHiveContinuous()) {
-        board.addPiece(piece, oldPosition, ID);
-        throw HiveContinuityException("Ant is't contiuity");
-    }
-
     // 5. 执行移动
     setPosition(newPosition);
     board.addPiece(piece, newPosition, ID);
@@ -104,22 +98,11 @@ void Ant::move(Board &board, const HexCoord &newPosition, const PlayerID &curren
     if (!isValidMove(newPosition, board)) {
         throw InvalidMoveException("Invalid ant move");
     }
-    /*
-    // 3. 检查目标位置是否已被占据
-    if (!board.isPositionOccupied(newPosition)) {
-        throw InvalidMoveException("The target position must be occupied by another piece");
-    }
-*/
+
     // 4. 尝试移动并检查蜂巢连续性
     HexCoord oldPosition = getPosition();
     std::cout<<"Position input in fonction is["<<oldPosition.q<<","<<oldPosition.r<<"]"<<std::endl;
     auto piece = board.removePiece(oldPosition);
-    // 临时移除后检查连续性
-    if (!board.isHiveContinuous()) {
-        board.addPiece(piece, oldPosition, ID);
-        throw HiveContinuityException("Ant is't contiuity");
-    }
-
 
     // 5. 执行移动
     setPosition(newPosition);
@@ -185,12 +168,6 @@ void Spider::move(Board &board, const HexCoord &newPosition, const PlayerID &cur
     HexCoord oldPosition = getPosition();
     auto piece = board.removePiece(oldPosition);
 
-    // 4. 临时移除后检查连续性
-    if (!board.isHiveContinuous()) {
-        board.addPiece(piece, oldPosition, ID);
-        throw HiveContinuityException("Spider move disrupts hive continuity");
-    }
-
     // 5. 执行移动
     setPosition(newPosition);
     board.addPiece(piece, newPosition, ID);
@@ -253,12 +230,6 @@ void Grasshopper::move(Board &board, const HexCoord &newPosition, const PlayerID
     HexCoord oldPosition = getPosition();
     auto piece = board.removePiece(oldPosition);
 
-    // 4. 临时移除后检查连续性
-    if (!board.isHiveContinuous()) {
-        board.addPiece(piece, oldPosition, ID);
-        throw HiveContinuityException("Grasshopper move disrupts hive continuity");
-    }
-
     // 5. 执行移动
     setPosition(newPosition);
     board.addPiece(piece, newPosition, ID);
@@ -292,12 +263,6 @@ void Beetle::move(Board &board, const HexCoord &newPosition, const PlayerID &cur
     // 3. 尝试移动并检查蜂巢连续性
     HexCoord oldPosition = getPosition();
     auto piece = board.removePiece(oldPosition);
-
-    // 4. 临时移除后检查连续性
-    if (!board.isHiveContinuous()) {
-        board.addPiece(piece, oldPosition, ID);
-        throw HiveContinuityException("Beetle move disrupts hive continuity");
-    }
 
     // 5. 执行移动
     setPosition(newPosition);

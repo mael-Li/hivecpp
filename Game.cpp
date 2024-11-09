@@ -348,6 +348,7 @@ void HumanPlayer::placePiece(Board& board, const std::string& pieceType) {
 
         if (isGameOver()) {
             std::cout << "\nGame Over! " << getWinner() << " wins!\n";
+            std::this_thread::sleep_for(std::chrono::milliseconds(100000));
         }
     }
     void Game::displayStartScreen() {
